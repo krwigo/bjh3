@@ -1,0 +1,6 @@
+TODO:
+- boot completed starts the alarm
+- prefs
+-- wifi only
+-- enable notifications?
+-- enable map
