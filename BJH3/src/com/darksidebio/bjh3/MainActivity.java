@@ -1,6 +1,7 @@
 package com.darksidebio.bjh3;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
@@ -36,12 +37,19 @@ public class MainActivity extends FragmentActivity {
 	ActionBar mActionBar;
 	TabListener mTabListener;
 	static List<String> mTabTitles;
+	static HashMap<String,String> mTabFeeds;
 	static Database mDatabase; 
 	
 	public MainActivity() {
-		super();
 		Log.d("Z", "Main()");
+
 		mTabTitles = Arrays.asList("BJH3", "Boxer", "FMH", "Trash", "Map");
+		
+		mTabFeeds = new HashMap<String,String>();
+		mTabFeeds.put("BJH3",  "http://www.hash.cn/feed/");
+		mTabFeeds.put("Boxer", "http://www.hash.cn/category/boxerh3/feed/");
+		mTabFeeds.put("FMH",   "http://www.hash.cn/category/fullmoonh3/feed/");
+		mTabFeeds.put("Trash", "http://www.hash.cn/category/hashtrash/feed/");
 	}
 	
 	@Override
@@ -121,7 +129,7 @@ public class MainActivity extends FragmentActivity {
 
 	    PendingIntent mTimerIntent = PendingIntent.getBroadcast(this, 0, new Intent(this, Alarm.class), 0);
 		mAlarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-		mAlarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 0, 60000, mTimerIntent);
+		mAlarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 0, 5000, mTimerIntent);
 	}
 	 
 	public class MyPagerAdapter extends FragmentPagerAdapter {
@@ -188,7 +196,7 @@ public class MainActivity extends FragmentActivity {
 			@Override
 			public void onReceive(Context arg0, Intent arg1) {
 				Log.d("Z", "FROM RSS FRAGMENT(3) -- MyBroadcastReceiver:onReceive -- "+mTitle);
-				Cursor mCursor = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[]{mTitle});
+				Cursor mCursor = mDatabase.getReadableDatabase().rawQuery(mQueryString, null);
 				mCursorAdapter.changeCursor(mCursor);
 				mCursorAdapter.notifyDataSetChanged();
 			}
@@ -199,13 +207,11 @@ public class MainActivity extends FragmentActivity {
 			mPos = getArguments().getInt("pos");
 			mTitle = getArguments().getString("title");
 
-			mQueryString = "SELECT id as _id, title, url, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? ORDER BY epoch DESC, _id DESC";
-			Cursor mCursor = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[]{mTitle});
+			mQueryString = "SELECT id as _id, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate, title, url FROM feeditems WHERE feed='"+mTitle+"' ORDER BY epoch DESC, _id DESC";
+			Cursor mCursor = mDatabase.getReadableDatabase().rawQuery(mQueryString, null);
 			
-			//NOTE: toViewIDs need to be in order with the LinearActivity xml
-			
-		    String[] fromFieldNames = new String[] { "title", "epochdate", "url" };
-			int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvURL };
+		    String[] fromFieldNames = new String[] { "title", "url", "epochdate" };
+			int[] toViewIDs = new int[] { R.id.tvName, R.id.tvURL, R.id.tvDate };
 			mCursorAdapter = new SimpleCursorAdapter(getActivity(), R.layout.fragment_list_item, mCursor, fromFieldNames, toViewIDs, 0);
 			
 			View rootView = inflater.inflate(R.layout.fragment_list, container, false);
