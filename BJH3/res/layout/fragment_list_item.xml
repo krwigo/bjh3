@@ -8,19 +8,19 @@
     <TextView
         android:id="@+id/tvName"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvDate"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:textStyle="italic" />
 
     <TextView
         android:id="@+id/tvURL"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:autoLink="web" />
 
 </LinearLayout>

@@ -1,21 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <PreferenceCategory android:title="PCat0Title" >
-
+    <PreferenceCategory android:title="Connection" >
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="prefSendReport"
-            android:summary="Checkbox0"
-            android:title="Checkbox0Title" >
+            android:defaultValue="true"
+            android:key="conn_wifi_only"
+            android:summary="If checked, will only update if wifi is connected."
+            android:title="Only Use WIFI" >
         </CheckBoxPreference>
 
-<!--         <ListPreference -->
-<!--             android:entries="@array/syncFrequency" -->
-<!--             android:entryValues="@array/syncFrequencyValues" -->
-<!--             android:key="prefSyncFrequency" -->
-<!--             android:summary="@string/pref_sync_frequency_summary" -->
-<!--             android:title="@string/pref_sync_frequency" /> -->
+        <ListPreference
+            android:defaultValue="3600"
+            android:dialogTitle="Update Delay"
+            android:entries="@array/updateDelayList"
+            android:entryValues="@array/updateDelayListValues"
+            android:key="update_rate"
+            android:summary="How long to wait before checking for updates."
+            android:title="Update Delay" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="Notifications" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="allow_notifications"
+            android:summary="If enabled, a notification will be shown when new articles are found."
+            android:title="Allow Notifications" >
+        </CheckBoxPreference>
+    </PreferenceCategory>
+<!--     <PreferenceCategory android:title="About" > -->
+<!--         <Preference -->
+<!--             android:key="about1" -->
+<!--             android:selectable="false" -->
+<!--             android:summary="Crash Test Dummy" /> -->
+<!--         <Preference -->
+<!--             android:key="about1" -->
+<!--             android:selectable="false" -->
+<!--             android:summary="2014-10-10" /> -->
+<!--         <Preference -->
+<!--             android:key="about1" -->
+<!--             android:selectable="false" -->
+<!--             android:summary="www.hash.cn" /> -->
+<!--     </PreferenceCategory> -->
 
 </PreferenceScreen>

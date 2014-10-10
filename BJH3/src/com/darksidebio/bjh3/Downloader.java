@@ -8,7 +8,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -25,22 +28,69 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class Downloader extends IntentService {
-	private static boolean hasRun = false;
-
+	private static boolean firstRun = true;
+	SharedPreferences mySharedPreferences;
+	
 	public Downloader() {
 		super(null);
+		Log.d("Z", "Downloader() Init");
 	}
 
-	int getNewItems(String feedtitle, String feedurl) {
+	void debugPrint(String name, SQLiteDatabase mSQL) {
+		Log.d("Z", "[debugPrint] BEGIN; "+name);
+		Cursor c = mSQL.rawQuery("SELECT feed,epoch FROM feedtimes", null);
+		Log.d("Z", "[debugPrint] count:"+c.getCount());
+		c.moveToFirst();
+		while (c.isAfterLast() == false) {
+			Log.d("Z", "[debugPrint]:  "+c.getString(0)+", "+c.getString(1));
+			c.moveToNext();
+		}
+		c.close();
+	}
+	
+	int getNewItems(String feedtitle, String feedurl, SQLiteDatabase mSQL, int pUpdateRate) {
 		int newItemCount = 0;
-		Database mDatabase = null;
+		Log.d("Z", "getNewItems() "+feedtitle);
+
+		//INSERT FEED
+		try {
+			ContentValues insertValues = new ContentValues();
+			insertValues.put("feed", feedtitle);
+			mSQL.insertOrThrow("feedtimes", null, insertValues);
+		} catch (SQLiteConstraintException e) {
+		}
 		
+		//GET FEED LAST RUN TIME
+		Cursor cSelect = mSQL.rawQuery("SELECT epoch FROM feedtimes WHERE (feed=?) LIMIT 1", new String[]{feedtitle});
+		if (cSelect.getCount() != 1) return 0;
+		cSelect.moveToFirst();
+		long tPast = cSelect.getInt(0);
+		long tNow = System.currentTimeMillis()/1000;
+
+		//CHECK
+		if (!firstRun && tPast < tNow && tPast+pUpdateRate > tNow)
+			return 0;
+		
+		Log.d("Z", "Updating "+feedtitle);
+		
+		//UPDATE LAST RUN TIME
+		ContentValues updateValues = new ContentValues();
+		updateValues.put("epoch", System.currentTimeMillis()/1000);
+		mSQL.update("feedtimes", updateValues, "feed=?", new String[]{feedtitle});
+
 		try {
 			URL url = new URL(feedurl);
 			SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -48,16 +98,9 @@ public class Downloader extends IntentService {
 			XMLReader xr = sp.getXMLReader();
 			RSSHandler rh = new RSSHandler();
 			xr.setContentHandler(rh);
-
 			xr.parse(new InputSource(url.openStream()));
 
 			for (RSSItem item : rh.items) {
-				Log.d("Z", "RSSITEM; "+item.mTitle+" (Feed:"+feedtitle+")");
-				Log.d("Z", "-date: "+item.mDate.toString());
-				
-				if (mDatabase == null)
-					mDatabase = new Database(getApplicationContext());
-				
 				ContentValues v = new ContentValues();
 				v.put("feed", feedtitle);
 				v.put("title", item.mTitle);
@@ -65,10 +108,9 @@ public class Downloader extends IntentService {
 				v.put("epoch", item.mDate.getTime()/1000);
 				
 				try {
-					mDatabase.insert(v);
+					mSQL.insertOrThrow("feeditems", null, v);
 					newItemCount += 1;
 				} catch (SQLiteConstraintException e) {
-					//Dupe
 				}
 			}
 		} catch (MalformedURLException e) {
@@ -80,32 +122,74 @@ public class Downloader extends IntentService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		if (mDatabase != null)
-			mDatabase.close();
 		
 		return newItemCount;
+	}
+	
+	boolean isWifiConnected() {
+		try {
+			ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+			return networkInfo.isConnected();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	boolean isDataConnected() {
+		try {
+			ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo networkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+			return networkInfo.isConnected();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		int newItemTotal = 0;
-		
-		if (hasRun)
-			return;
+
 		if (intent == null)
 			return;
-		// if (wifiOnly && isConnected)
-		// return;
-
+		
 		Log.d("Z", "Downloader");
-		hasRun = true;
+		
+		//PREFS
+		mySharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		boolean pWifiOnly = mySharedPreferences.getBoolean("conn_wifi_only", true);
+		boolean pNotifications = mySharedPreferences.getBoolean("allow_notifications", true);
+		int pUpdateRate = 3600;
+		try {
+			pUpdateRate = Integer.parseInt(mySharedPreferences.getString("update_rate", "3600"));
+		} catch (Exception e) {
+			Log.e("Z", "FAILED TO COERCE UPDATE_RATE INTEGER");
+		}
+		
+		if (!isWifiConnected() && pWifiOnly) {
+			Log.d("Z", "Connection not available. (No wifi, Not allowed to use mobile)");
+			return;
+		}
+
+		//DB
+		Database mDatabase = new Database(getApplicationContext());
+		SQLiteDatabase mSQL = mDatabase.getWritableDatabase();
+		
+		HashMap<String,String> mTabFeeds = new HashMap<String,String>();
+		mTabFeeds.put("BJH3",  "http://www.hash.cn/feed/");
+		mTabFeeds.put("Boxer", "http://www.hash.cn/category/boxerh3/feed/");
+		mTabFeeds.put("FMH",   "http://www.hash.cn/category/fullmoonh3/feed/");
+		mTabFeeds.put("Trash", "http://www.hash.cn/category/hashtrash/feed/");
 		
 		//Download
-		newItemTotal += this.getNewItems("BJH3",  "http://www.hash.cn/feed/");
-		newItemTotal += this.getNewItems("Boxer", "http://www.hash.cn/category/boxerh3/feed/");
-		newItemTotal += this.getNewItems("FMH",   "http://www.hash.cn/category/fullmoonh3/feed/");
-		newItemTotal += this.getNewItems("Trash", "http://www.hash.cn/category/hashtrash/feed/");
+		for (Entry<String,String> entry : mTabFeeds.entrySet()) {
+			newItemTotal += this.getNewItems(entry.getKey(), entry.getValue(), mSQL, pUpdateRate);
+		}
+		
+		firstRun = false;
+		mSQL.close();
 
 		if (newItemTotal > 0) {
 			//Update
@@ -113,17 +197,19 @@ public class Downloader extends IntentService {
 			b.setAction("SOME_ACTION");
 			sendBroadcast(b);
 			
-			//Notify
-			PendingIntent pIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
-			NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-			Notification noti = new NotificationCompat.Builder(this)
-				.setSmallIcon(R.drawable.beijing_trans96)
-				.setContentIntent(pIntent)
-				.setAutoCancel(true)
-				.setContentTitle("Beijing Hash House Harriers")
-				.setContentText(newItemTotal + (newItemTotal > 1 ? " new posts" : " new post"))
-				.build();
-			notificationManager.notify(0, noti);
+			if (pNotifications) {
+				//Notify
+				PendingIntent pIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+				NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+				Notification noti = new NotificationCompat.Builder(this)
+					.setSmallIcon(R.drawable.beijing_trans96)
+					.setContentIntent(pIntent)
+					.setAutoCancel(true)
+					.setContentTitle("Beijing Hash House Harriers")
+					.setContentText(newItemTotal + (newItemTotal > 1 ? " new posts" : " new post"))
+					.build();
+				notificationManager.notify(0, noti);
+			}
 		}
 	}
 
@@ -131,7 +217,7 @@ public class Downloader extends IntentService {
 		String mTitle;
 		String mURL;
 		Date mDate;
-		
+
 		public RSSItem() {
 			mDate = new Date(0);
 		}
@@ -172,7 +258,7 @@ public class Downloader extends IntentService {
 				curItem.mURL = tmpValue.toString();
 			} else if (qName.equalsIgnoreCase("pubdate")) {
 				try {
-					DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+					DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.getDefault());
 					curItem.mDate = formatter.parse(tmpValue.toString());
 				} catch (ParseException e) {
 					curItem.mDate = new Date(System.currentTimeMillis());
