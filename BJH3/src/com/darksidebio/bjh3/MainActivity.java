@@ -13,8 +13,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -210,12 +212,15 @@ public class MainActivity extends FragmentActivity {
 			mPos = getArguments().getInt("pos");
 			mTitle = getArguments().getString("title");
 
-			mQueryString = "SELECT id as _id, title, url, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? ORDER BY epoch DESC, _id DESC";
+			mQueryString = "SELECT id as _id, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? ORDER BY epoch DESC, _id DESC";
 			Cursor mCursor = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[]{mTitle});
 			
 			//NOTE: toViewIDs need to be in order with the LinearActivity xml
 			
-		    String[] fromFieldNames = new String[] { "title", "epochdate", "url" };
+			SharedPreferences mySharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			boolean pDisplayURL = mySharedPreferences.getBoolean("display_url_link", true);
+			
+		    String[] fromFieldNames = new String[] { "title", "epochdate", (pDisplayURL ? "url" : "guid") };
 			int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvURL };
 			mCursorAdapter = new SimpleCursorAdapter(getActivity(), R.layout.fragment_list_item, mCursor, fromFieldNames, toViewIDs, 0);
 			

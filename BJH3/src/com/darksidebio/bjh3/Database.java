@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class Database extends SQLiteOpenHelper {
 	public Database(Context context) {
-		super(context, "feeditems", null, 25); /* VER */
+		super(context, "feeditems", null, 27); /* VER */
 	}
 
 	@Override
@@ -15,7 +15,7 @@ public class Database extends SQLiteOpenHelper {
 		Log.d("Z", "UPDATING DATABASE");
 		
 		db.execSQL("DROP TABLE IF EXISTS feeditems");
-		db.execSQL("CREATE TABLE IF NOT EXISTS feeditems (id INTEGER PRIMARY KEY AUTOINCREMENT, epoch INTEGER default 0, feed TEXT, title TEXT, url TEXT, UNIQUE(feed,url))");
+		db.execSQL("CREATE TABLE IF NOT EXISTS feeditems (id INTEGER PRIMARY KEY AUTOINCREMENT, epoch INTEGER default 0, feed TEXT, title TEXT, url TEXT, guid TEXT, UNIQUE(feed,url))");
 		
 		db.execSQL("DROP TABLE IF EXISTS feedtimes");
 		db.execSQL("CREATE TABLE IF NOT EXISTS feedtimes (id INTEGER PRIMARY KEY AUTOINCREMENT, epoch INTEGER default 0, feed TEXT, UNIQUE(feed))");

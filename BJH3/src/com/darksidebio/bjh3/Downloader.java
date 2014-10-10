@@ -84,6 +84,10 @@ public class Downloader extends IntentService {
 		if (!firstRun && tPast < tNow && tPast+pUpdateRate > tNow)
 			return 0;
 		
+		//WIFI
+		if (!isWifiConnected() && mySharedPreferences.getBoolean("conn_wifi_only", true))
+			return newItemCount;
+
 		Log.d("Z", "Updating "+feedtitle);
 		
 		//UPDATE LAST RUN TIME
@@ -105,6 +109,7 @@ public class Downloader extends IntentService {
 				v.put("feed", feedtitle);
 				v.put("title", item.mTitle);
 				v.put("url", item.mURL);
+				v.put("guid", item.mGUID);
 				v.put("epoch", item.mDate.getTime()/1000);
 				
 				try {
@@ -159,7 +164,7 @@ public class Downloader extends IntentService {
 		
 		//PREFS
 		mySharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		boolean pWifiOnly = mySharedPreferences.getBoolean("conn_wifi_only", true);
+//		boolean pWifiOnly = mySharedPreferences.getBoolean("conn_wifi_only", true);
 		boolean pNotifications = mySharedPreferences.getBoolean("allow_notifications", true);
 		int pUpdateRate = 3600;
 		try {
@@ -168,7 +173,7 @@ public class Downloader extends IntentService {
 			Log.e("Z", "FAILED TO COERCE UPDATE_RATE INTEGER");
 		}
 		
-		if (!isWifiConnected() && pWifiOnly) {
+		if (!isWifiConnected() && mySharedPreferences.getBoolean("conn_wifi_only", true)) {
 			Log.d("Z", "Connection not available. (No wifi, Not allowed to use mobile)");
 			return;
 		}
@@ -214,8 +219,7 @@ public class Downloader extends IntentService {
 	}
 
 	private class RSSItem {
-		String mTitle;
-		String mURL;
+		String mTitle, mURL, mGUID;
 		Date mDate;
 
 		public RSSItem() {
@@ -256,6 +260,8 @@ public class Downloader extends IntentService {
 				curItem.mTitle = tmpValue.toString();
 			} else if (qName.equalsIgnoreCase("link")) {
 				curItem.mURL = tmpValue.toString();
+			} else if (qName.equalsIgnoreCase("guid")) {
+				curItem.mGUID = tmpValue.toString();
 			} else if (qName.equalsIgnoreCase("pubdate")) {
 				try {
 					DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.getDefault());
