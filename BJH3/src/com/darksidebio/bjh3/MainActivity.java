@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -23,6 +24,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -135,6 +137,24 @@ public class MainActivity extends FragmentActivity {
 	    PendingIntent mTimerIntent = PendingIntent.getBroadcast(this, 0, new Intent(this, Alarm.class), 0);
 		mAlarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
 		mAlarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 0, 60000, mTimerIntent);
+		
+		MyLoadingBroadcastReceiver br = new MyLoadingBroadcastReceiver();
+		IntentFilter f = new IntentFilter();
+		f.addAction("STATUS_UPDATING");
+		f.addAction("STATUS_UPDATED");
+		registerReceiver(br, f);
+	}
+	
+	class MyLoadingBroadcastReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context arg0, Intent arg1) {
+			Log.d("Z", "MyLoadingBroadcastReceiver:onReceive");
+			if (arg1.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
+				mActionBar.setSubtitle("Updating..");
+			} else if (arg1.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
+				mActionBar.setSubtitle(null);
+			}
+		}
 	}
 	 
 	public class MyPagerAdapter extends FragmentPagerAdapter {

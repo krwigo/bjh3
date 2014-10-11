@@ -15,7 +15,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/beijing_trans96"
+        android:icon="@drawable/beijing_trans96blk"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity

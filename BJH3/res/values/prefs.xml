@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="updateDelayList">
+        <item>never</item>
         <item>10 minutes</item>
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>45 minutes</item>
         <item>1 hour</item>
         <item>3 hours</item>
         <item>6 hours</item>
@@ -11,7 +15,11 @@
         <item>24 hours</item>
     </string-array>
     <string-array name="updateDelayListValues">
+        <item>0</item>
         <item>600</item>
+        <item>900</item>
+        <item>1800</item>
+        <item>2700</item>
         <item>3600</item>
         <item>10800</item>
         <item>21600</item>

@@ -42,7 +42,9 @@ import android.util.Log;
 
 public class Downloader extends IntentService {
 	private static boolean firstRun = true;
-	SharedPreferences mySharedPreferences;
+	SharedPreferences mSharedPreferences = null;
+	Database mDatabase = null;
+	SQLiteDatabase mSQL = null;
 	
 	public Downloader() {
 		super(null);
@@ -61,7 +63,7 @@ public class Downloader extends IntentService {
 		c.close();
 	}
 	
-	int getNewItems(String feedtitle, String feedurl, SQLiteDatabase mSQL, int pUpdateRate) {
+	int getNewItems(String feedtitle, String feedurl) {
 		int newItemCount = 0;
 		Log.d("Z", "getNewItems() "+feedtitle);
 
@@ -77,16 +79,20 @@ public class Downloader extends IntentService {
 		Cursor cSelect = mSQL.rawQuery("SELECT epoch FROM feedtimes WHERE (feed=?) LIMIT 1", new String[]{feedtitle});
 		if (cSelect.getCount() != 1) return 0;
 		cSelect.moveToFirst();
+		
 		long tPast = cSelect.getInt(0);
 		long tNow = System.currentTimeMillis()/1000;
+		int tRate = getConnectionRate();
 
-		//CHECK
-		if (!firstRun && tPast < tNow && tPast+pUpdateRate > tNow)
-			return 0;
+		Log.d("Z", "-[tRate]: "+tRate);
 		
-		//WIFI
-		if (!isWifiConnected() && mySharedPreferences.getBoolean("conn_wifi_only", true))
-			return newItemCount;
+		//CHECK
+		//> if "never" or not connected
+		if (tRate <= 0)
+			return 0;
+		//> if not first run, past isnt in the future, and enough time has passed
+		if (!firstRun && tPast < tNow && tPast+tRate > tNow)
+			return 0;
 
 		Log.d("Z", "Updating "+feedtitle);
 		
@@ -153,6 +159,27 @@ public class Downloader extends IntentService {
 		return false;
 	}
 	
+	int getConnectionRate() {
+		if (isWifiConnected()) {
+			try {
+				return Integer.parseInt(mSharedPreferences.getString("update_rate_wifi", "3600"));
+			} catch (Exception e) {
+				return 3600;
+			}
+		} else if (isDataConnected()) {
+			try {
+				return Integer.parseInt(mSharedPreferences.getString("update_rate_cell", "0"));
+			} catch (Exception e) {
+				return 0;
+			}
+		}
+		return 0;
+	}
+	
+	void postStatusChange(String _action) {
+		sendBroadcast(new Intent().setAction(_action));
+	}
+
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		int newItemTotal = 0;
@@ -161,26 +188,15 @@ public class Downloader extends IntentService {
 			return;
 		
 		Log.d("Z", "Downloader");
+		postStatusChange("STATUS_UPDATING");
 		
 		//PREFS
-		mySharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-//		boolean pWifiOnly = mySharedPreferences.getBoolean("conn_wifi_only", true);
-		boolean pNotifications = mySharedPreferences.getBoolean("allow_notifications", true);
-		int pUpdateRate = 3600;
-		try {
-			pUpdateRate = Integer.parseInt(mySharedPreferences.getString("update_rate", "3600"));
-		} catch (Exception e) {
-			Log.e("Z", "FAILED TO COERCE UPDATE_RATE INTEGER");
-		}
+		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		boolean pNotifications = mSharedPreferences.getBoolean("allow_notifications", true);
 		
-		if (!isWifiConnected() && mySharedPreferences.getBoolean("conn_wifi_only", true)) {
-			Log.d("Z", "Connection not available. (No wifi, Not allowed to use mobile)");
-			return;
-		}
-
 		//DB
-		Database mDatabase = new Database(getApplicationContext());
-		SQLiteDatabase mSQL = mDatabase.getWritableDatabase();
+		mDatabase = new Database(getApplicationContext());
+		mSQL = mDatabase.getWritableDatabase();
 		
 		HashMap<String,String> mTabFeeds = new HashMap<String,String>();
 		mTabFeeds.put("BJH3",  "http://www.hash.cn/feed/");
@@ -190,17 +206,12 @@ public class Downloader extends IntentService {
 		
 		//Download
 		for (Entry<String,String> entry : mTabFeeds.entrySet()) {
-			newItemTotal += this.getNewItems(entry.getKey(), entry.getValue(), mSQL, pUpdateRate);
+			newItemTotal += this.getNewItems(entry.getKey(), entry.getValue());
 		}
 		
-		firstRun = false;
-		mSQL.close();
-
 		if (newItemTotal > 0) {
 			//Update
-			Intent b = new Intent();
-			b.setAction("SOME_ACTION");
-			sendBroadcast(b);
+			postStatusChange("SOME_ACTION");
 			
 			if (pNotifications) {
 				//Notify
@@ -216,6 +227,12 @@ public class Downloader extends IntentService {
 				notificationManager.notify(0, noti);
 			}
 		}
+		
+		//CLEANUP
+		firstRun = false;
+		mSQL.close();
+		mDatabase.close();
+		postStatusChange("STATUS_UPDATED");
 	}
 
 	private class RSSItem {
