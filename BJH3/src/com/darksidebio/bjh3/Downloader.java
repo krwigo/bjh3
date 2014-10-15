@@ -1,8 +1,10 @@
 package com.darksidebio.bjh3;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -95,20 +97,34 @@ public class Downloader extends IntentService {
 			return 0;
 
 		Log.d("Z", "Updating "+feedtitle);
-		
+		postStatusChange("STATUS_UPDATING");
+
 		//UPDATE LAST RUN TIME
 		ContentValues updateValues = new ContentValues();
 		updateValues.put("epoch", System.currentTimeMillis()/1000);
 		mSQL.update("feedtimes", updateValues, "feed=?", new String[]{feedtitle});
 
+		Log.d("Z", "[Updating] 01");
 		try {
+			Log.d("Z", "[Updating] 02");
 			URL url = new URL(feedurl);
 			SAXParserFactory spf = SAXParserFactory.newInstance();
 			SAXParser sp = spf.newSAXParser();
 			XMLReader xr = sp.getXMLReader();
 			RSSHandler rh = new RSSHandler();
 			xr.setContentHandler(rh);
-			xr.parse(new InputSource(url.openStream()));
+			Log.d("Z", "[Updating] 03");
+			URLConnection con = url.openConnection();
+			con.setConnectTimeout(30000);
+			con.setReadTimeout(30000);
+			Log.d("Z", "[Updating] 03A");
+			InputStream in = con.getInputStream();
+			Log.d("Z", "[Updating] 03B");
+//			InputStream in = url.openStream(); //Doesn't accept timeouts
+			InputSource is = new InputSource(in);
+			Log.d("Z", "[Updating] 03C");
+			xr.parse(is);
+			Log.d("Z", "[Updating] 03D");
 
 			for (RSSItem item : rh.items) {
 				ContentValues v = new ContentValues();
@@ -124,6 +140,7 @@ public class Downloader extends IntentService {
 				} catch (SQLiteConstraintException e) {
 				}
 			}
+			Log.d("Z", "[Updating] 08");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
@@ -134,6 +151,7 @@ public class Downloader extends IntentService {
 			e.printStackTrace();
 		}
 		
+		Log.d("Z", "[Updating] 09");
 		return newItemCount;
 	}
 	
@@ -177,18 +195,19 @@ public class Downloader extends IntentService {
 	}
 	
 	void postStatusChange(String _action) {
+		Log.d("Z", "postSatusChange(): "+_action);
 		sendBroadcast(new Intent().setAction(_action));
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		int newItemTotal = 0;
+		postStatusChange("STATUS_UPDATED");
 
 		if (intent == null)
 			return;
 		
 		Log.d("Z", "Downloader");
-		postStatusChange("STATUS_UPDATING");
 		
 		//PREFS
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -206,8 +225,17 @@ public class Downloader extends IntentService {
 		
 		//Download
 		for (Entry<String,String> entry : mTabFeeds.entrySet()) {
-			newItemTotal += this.getNewItems(entry.getKey(), entry.getValue());
+			Log.d("Z", "Launching.. "+entry.getKey());
+			try {
+				newItemTotal += this.getNewItems(entry.getKey(), entry.getValue());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			Log.d("Z", "... returned new value: "+newItemTotal);
 		}
+		
+		//UI Finished Updating
+		postStatusChange("STATUS_UPDATED");
 		
 		if (newItemTotal > 0) {
 			//Update
@@ -232,7 +260,6 @@ public class Downloader extends IntentService {
 		firstRun = false;
 		mSQL.close();
 		mDatabase.close();
-		postStatusChange("STATUS_UPDATED");
 	}
 
 	private class RSSItem {

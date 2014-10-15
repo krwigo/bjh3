@@ -2,6 +2,9 @@ package com.darksidebio.bjh3;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;
@@ -14,8 +17,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -24,7 +27,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SimpleCursorAdapter;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -54,6 +56,20 @@ public class MainActivity extends FragmentActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+	
+	public long getMyCRC() {
+		long r = 0;
+		try {
+			ApplicationInfo ai = getPackageManager().getApplicationInfo(getPackageName(), 0);
+			ZipFile zf = new ZipFile(ai.sourceDir);
+			ZipEntry ze = zf.getEntry("classes.dex");
+			r = ze.getCrc();
+			zf.close();
+		} catch (Exception e) {
+			return -1;
+		}
+		return r;
 	}
 	
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -86,6 +102,8 @@ public class MainActivity extends FragmentActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d("Z", "Create()");
 		super.onCreate(savedInstanceState);
+		
+		Log.d("Z", "CRC Test: "+getMyCRC());
 		
 		mActionBar = getActionBar();
 	    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -150,10 +168,19 @@ public class MainActivity extends FragmentActivity {
 		public void onReceive(Context arg0, Intent arg1) {
 			Log.d("Z", "MyLoadingBroadcastReceiver:onReceive");
 			if (arg1.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
-				mActionBar.setSubtitle("Updating..");
+				Log.d("Z", "1");
+				if (mActionBar.getSubtitle() != null && mActionBar.getSubtitle().length() > 0) {
+					Log.d("Z", "12");
+					mActionBar.setSubtitle(mActionBar.getSubtitle()+".");
+				} else {
+					Log.d("Z", "13");
+					mActionBar.setSubtitle("Updating..");
+				}
+				Log.d("Z", "14");
 			} else if (arg1.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
 				mActionBar.setSubtitle(null);
 			}
+			Log.d("Z", "15");
 		}
 	}
 	 
