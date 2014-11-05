@@ -1,5 +1,6 @@
 package com.darksidebio.bjh3;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
@@ -10,23 +11,22 @@ public class PrefsActivity extends PreferenceActivity implements OnSharedPrefere
 	public PrefsActivity() {
 		Log.d("Z", "PrefsActivity INIT()");
 	}
-	
+
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-	   super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);
 		Log.d("Z", "PrefsActivity onCreate()");
 		addPreferencesFromResource(R.xml.prefs);
 	}
 
+	public void onStop() {
+		super.onStop();
+		Log.d("Z", "PrefsActivity onStop()");
+		sendBroadcast(new Intent().setAction("SOME_ACTION"));
+	}
+
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
-		Log.d("Z", "onSharedPreferenceChanged: "+key);
-/*		Preference pref = findPreference(key);
-	    if (pref instanceof ListPreference) {
-	    	Log.d("Z", "[ListPref] Updating");
-	        ListPreference listPref = (ListPreference) pref;
-	        pref.setSummary(listPref.getEntry());
-	    }*/
 	}
 }
