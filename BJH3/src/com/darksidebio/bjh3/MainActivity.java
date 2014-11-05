@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 
 	public View inflateList(String title) {
 		View v = svc_inflater.inflate(R.layout.fragment_list, null);
-		v.setTag(1);
+		v.setTag("LIST");
 		ListView lv = (ListView) v.findViewById(R.id.flist);
 		attachCursorAdapter(title, lv);
 		return v;
@@ -357,14 +357,14 @@ public class MainActivity extends Activity {
 				mActionBar.setSubtitle(null);
 			} else if (i.getAction().equalsIgnoreCase("SOME_ACTION")) {
 				for (String key : mhViews.keySet()) {
-					try {
-						View v = mhViews.get(key);
-						if (v != null && v.getTag() != null && v.getTag().equals(1)) {
-							ListView lv = (ListView) v.findViewById(R.id.flist);
-							attachCursorAdapter(key, lv);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
+					View v = mhViews.get(key);
+					if (v != null && v.getTag().equals("LIST")) {
+						ListView lv = (ListView) v.findViewById(R.id.flist);
+						attachCursorAdapter(key, lv);
+						// SimpleCursorAdapter a =
+						// (SimpleCursorAdapter)lv.getAdapter();
+						// a.changeCursor(attachCursorAdapter(key));
+						// a.notifyDataSetChanged();
 					}
 				}
 			}
