@@ -88,8 +88,8 @@ public class MainActivity extends Activity {
 		boolean pDisplayURL = mPrefs.getBoolean("display_url_link", true);
 		boolean pDisplayOLD = mPrefs.getBoolean("display_old_item", false);
 
-		String[] fromFieldNames = new String[] { "title", "epochdate", (pDisplayURL ? "url" : "guid") };
-		int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvURL };
+		String[] fromFieldNames = new String[] { "title", "epochdate", (pDisplayURL ? "url" : "guid"), };
+		int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvURL, };
 
 		String mQueryString = "SELECT id as _id, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? and active>=? ORDER BY epoch DESC, _id DESC";
 		Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { title, (pDisplayOLD ? "0" : "1") });
@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 
 	public View inflateList(String title) {
 		View v = svc_inflater.inflate(R.layout.fragment_list, null);
-		v.setTag("LIST");
+		v.setTag(1);
 		ListView lv = (ListView) v.findViewById(R.id.flist);
 		attachCursorAdapter(title, lv);
 		return v;
@@ -212,13 +212,16 @@ public class MainActivity extends Activity {
 					Node n = mySong.pNodes.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						TextView tvNew = new TextView(MainActivity.this);
+						tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Medium);
 						tvNew.setText(n.getTextContent());
 						tvNew.setPadding(20, 20, 0, 0);
 
 						if (n.getNodeName().equals("info")) {
 							tvNew.setTypeface(null, Typeface.ITALIC);
+							tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Small);
+							tvNew.setPadding(10, 20, 0, 0);
 							if (lastWasInfo)
-								tvNew.setPadding(20, 0, 0, 0);
+								tvNew.setPadding(10, 0, 0, 0);
 							lastWasInfo = true;
 						} else {
 							lastWasInfo = false;
@@ -282,7 +285,10 @@ public class MainActivity extends Activity {
 		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
 			@Override
 			public void onPageSelected(int position) {
-				getActionBar().setSelectedNavigationItem(position);
+				try {
+					getActionBar().setSelectedNavigationItem(position);
+				} catch (Exception e) {
+				}
 			}
 		});
 
@@ -357,14 +363,14 @@ public class MainActivity extends Activity {
 				mActionBar.setSubtitle(null);
 			} else if (i.getAction().equalsIgnoreCase("SOME_ACTION")) {
 				for (String key : mhViews.keySet()) {
-					View v = mhViews.get(key);
-					if (v != null && v.getTag().equals("LIST")) {
-						ListView lv = (ListView) v.findViewById(R.id.flist);
-						attachCursorAdapter(key, lv);
-						// SimpleCursorAdapter a =
-						// (SimpleCursorAdapter)lv.getAdapter();
-						// a.changeCursor(attachCursorAdapter(key));
-						// a.notifyDataSetChanged();
+					try {
+						View v = mhViews.get(key);
+						if (v != null && v.getTag() != null && v.getTag().equals(1)) {
+							ListView lv = (ListView) v.findViewById(R.id.flist);
+							attachCursorAdapter(key, lv);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
 			}

@@ -3,29 +3,31 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="5dp" >
+    android:padding="10sp" >
 
     <TextView
         android:id="@+id/tvName"
+        style="@android:style/TextAppearance.Large"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:textStyle="bold" />
+        android:layout_alignParentTop="true" />
 
     <TextView
         android:id="@+id/tvDate"
+        style="@android:style/TextAppearance.Medium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_alignLeft="@+id/tvName"
         android:layout_below="@+id/tvName"
         android:textStyle="italic" />
 
     <TextView
         android:id="@+id/tvURL"
+        style="@android:style/TextAppearance.Medium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_alignLeft="@+id/tvDate"
         android:layout_below="@+id/tvDate"
         android:autoLink="web" />
 
