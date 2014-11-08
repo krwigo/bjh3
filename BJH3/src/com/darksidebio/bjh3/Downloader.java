@@ -50,7 +50,6 @@ public class Downloader extends IntentService {
 
 	public Downloader() {
 		super(null);
-		Log.d("Z", "Downloader() Init");
 	}
 
 //	void debugPrint(String name, SQLiteDatabase mSQL) {
@@ -67,7 +66,6 @@ public class Downloader extends IntentService {
 
 	int getNewItems(String feedtitle, String feedurl) {
 		int newItemCount = 0;
-		Log.d("Z", "getNewItems() " + feedtitle);
 
 		// INSERT FEED
 		try {
@@ -98,7 +96,6 @@ public class Downloader extends IntentService {
 		if (!firstRun && tPast < tNow && tPast + tRate > tNow)
 			return 0;
 
-		Log.d("Z", "Updating " + feedtitle);
 		postStatusChange("STATUS_UPDATING");
 
 		// UPDATE LAST RUN TIME
@@ -208,7 +205,6 @@ public class Downloader extends IntentService {
 	}
 
 	void postStatusChange(String _action) {
-		Log.d("Z", "postSatusChange(): " + _action);
 		sendBroadcast(new Intent().setAction(_action));
 	}
 
@@ -219,8 +215,6 @@ public class Downloader extends IntentService {
 
 		if (intent == null)
 			return;
-
-		Log.d("Z", "Downloader");
 
 		// PREFS
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -250,7 +244,7 @@ public class Downloader extends IntentService {
 
 		if (newItemTotal > 0) {
 			// Update
-			postStatusChange("SOME_ACTION");
+			postStatusChange("STATUS_DATACHANGE");
 
 			if (pNotifications) {
 				// Notify

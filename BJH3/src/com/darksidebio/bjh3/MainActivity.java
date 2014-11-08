@@ -11,11 +11,13 @@ import java.util.zip.ZipFile;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import com.darksidebio.bjh3.R;
 
+import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;
@@ -35,7 +37,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -73,12 +77,18 @@ public class MainActivity extends Activity {
 	public final HashMap<String, View> mhViews = new HashMap<String, View>();
 
 	class Song {
-		String pName;
+		String pName, pColor;
 		NodeList pNodes;
 
 		public Song(Node inputNode) {
-			pName = inputNode.getAttributes().getNamedItem("name").getNodeValue();
+			NamedNodeMap nnm = inputNode.getAttributes();
 			pNodes = inputNode.getChildNodes();
+			pName = nnm.getNamedItem("name").getNodeValue();
+			try {
+				pColor = nnm.getNamedItem("borderleft").getNodeValue();
+				Log.d("Z", "NNM got " + pColor);
+			} catch (Exception e) {
+			}
 		}
 	}
 
@@ -88,15 +98,31 @@ public class MainActivity extends Activity {
 		boolean pDisplayURL = mPrefs.getBoolean("display_url_link", true);
 		boolean pDisplayOLD = mPrefs.getBoolean("display_old_item", false);
 
-		String[] fromFieldNames = new String[] { "title", "epochdate", (pDisplayURL ? "url" : "guid"), };
-		int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvURL, };
+		String[] fromFieldNames = new String[] { "title", "epochdate", "feed", (pDisplayURL ? "url" : "guid"), };
+		int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvFeed, R.id.tvURL, };
 
-		String mQueryString = "SELECT id as _id, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? and active>=? ORDER BY epoch DESC, _id DESC";
-		Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { title, (pDisplayOLD ? "0" : "1") });
+		// String mQueryString =
+		// "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? and active>=? ORDER BY epoch DESC, _id DESC";
+		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
+		// String[] { title, (pDisplayOLD ? "0" : "1") });
+		String mQueryString = "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+		Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { (pDisplayOLD ? "0" : "1") });
 
-		lv.setAdapter(new SimpleCursorAdapter(this, R.layout.fragment_list_item, c, fromFieldNames, toViewIDs, 0) {
+		lv.setAdapter(new SimpleCursorAdapter(this, R.layout.fragment_listitem, c, fromFieldNames, toViewIDs, 0) {
 			public View getView(int position, View convertView, ViewGroup parent) {
 				View v = super.getView(position, convertView, parent);
+
+				TextView tvFeed = (TextView) v.findViewById(R.id.tvFeed);
+				View catColor = (View) v.findViewById(R.id.catColor);
+				if (tvFeed.getText().equals("BJH3"))
+					catColor.setBackgroundColor(Color.RED);
+				else if (tvFeed.getText().equals("Boxer"))
+					catColor.setBackgroundColor(Color.MAGENTA);
+				else if (tvFeed.getText().equals("FMH"))
+					catColor.setBackgroundColor(Color.GRAY);
+				else if (tvFeed.getText().equals("Trash"))
+					catColor.setBackgroundColor(Color.BLUE);
+
 				v.setOnLongClickListener(new OnLongClickListener() {
 					@Override
 					public boolean onLongClick(View itemview) {
@@ -111,6 +137,7 @@ public class MainActivity extends Activity {
 					}
 
 				});
+				
 				return v;
 			}
 		});
@@ -144,7 +171,7 @@ public class MainActivity extends Activity {
 		IntentFilter f = new IntentFilter();
 		f.addAction("STATUS_UPDATING");
 		f.addAction("STATUS_UPDATED");
-		f.addAction("SOME_ACTION");
+		f.addAction("STATUS_DATACHANGE");
 		registerReceiver(br, f);
 
 		// Views - init
@@ -184,6 +211,7 @@ public class MainActivity extends Activity {
 				return i;
 			}
 
+			@SuppressLint("NewApi")
 			@Override
 			public View getView(int pos, View v, ViewGroup parent) {
 				// if (v != null)
@@ -198,6 +226,14 @@ public class MainActivity extends Activity {
 				// Lyrics
 				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
 				lyricLayout.setVisibility(View.GONE);
+
+				// try {
+				// // android:background="@drawable/border_left_red"
+				// v.setBackgroundResource(getResources().getIdentifier("drawable/"
+				// + mySong.pColor, null, getPackageName()));
+				// } catch (Exception e) {
+				// e.printStackTrace();
+				// }
 
 				v.setOnClickListener(new OnClickListener() {
 					@Override
@@ -238,9 +274,9 @@ public class MainActivity extends Activity {
 
 		// Views
 		mhViews.put("BJH3", inflateList("BJH3"));
-		mhViews.put("Boxer", inflateList("Boxer"));
-		mhViews.put("FMH", inflateList("FMH"));
-		mhViews.put("Trash", inflateList("Trash"));
+		// mhViews.put("Boxer", inflateList("Boxer"));
+		// mhViews.put("FMH", inflateList("FMH"));
+		// mhViews.put("Trash", inflateList("Trash"));
 		mhViews.put("Songs", mViewSongs);
 		// mhViews.put("Map", inflater.inflate(R.layout.fragment_map, null));
 
@@ -298,9 +334,9 @@ public class MainActivity extends Activity {
 		mActionBar.setTitle("Beijing Hash House Harriers");
 		mActionBar.removeAllTabs();
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("BJH3"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Boxer"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("FMH"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
+		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Boxer"));
+		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("FMH"));
+		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Songs"));
 		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Map"));
 	}
@@ -361,7 +397,7 @@ public class MainActivity extends Activity {
 				}
 			} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
 				mActionBar.setSubtitle(null);
-			} else if (i.getAction().equalsIgnoreCase("SOME_ACTION")) {
+			} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
 				for (String key : mhViews.keySet()) {
 					try {
 						View v = mhViews.get(key);

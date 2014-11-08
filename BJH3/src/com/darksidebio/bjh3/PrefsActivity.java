@@ -23,7 +23,7 @@ public class PrefsActivity extends PreferenceActivity implements OnSharedPrefere
 	public void onStop() {
 		super.onStop();
 		Log.d("Z", "PrefsActivity onStop()");
-		sendBroadcast(new Intent().setAction("SOME_ACTION"));
+		sendBroadcast(new Intent().setAction("STATUS_DATACHANGE"));
 	}
 
 	@Override

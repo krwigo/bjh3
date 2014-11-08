@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10sp" >
+
+    <View
+        android:id="@+id/catColor"
+        android:layout_width="20sp"
+        android:layout_height="20sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="#66FF66"
+        android:visibility="visible" >
+    </View>
+
+    <TextView
+        android:id="@+id/tvName"
+        style="@android:style/TextAppearance.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/tvDate"
+        style="@android:style/TextAppearance.Medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tvURL"
+        android:layout_below="@+id/tvURL"
+        android:textColor="@android:color/tertiary_text_light"
+        android:textStyle="italic" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/tvFeed"
+        style="@android:style/TextAppearance.Medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/tvDate"
+        android:layout_marginLeft="5sp"
+        android:layout_toRightOf="@+id/tvDate" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/tvURL"
+        style="@android:style/TextAppearance.Medium"
+        android:textColorLink="@android:color/darker_gray"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tvName"
+        android:layout_below="@+id/tvName"
+        android:autoLink="web" >
+    </TextView>
+
+</RelativeLayout>
