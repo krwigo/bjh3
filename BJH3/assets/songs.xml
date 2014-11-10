@@ -371,16 +371,6 @@ number 3 (put down one finger)
 number 2 (put down one finger)
 You’re number 1 (with only middle finger raised)</verse>
 	</song>
-	<song group="DOWN DOWNS" name="DO YOUR BALLS HANG LOW?">
-		<info>(Tune of Do Your Ears Hang Low?)</info>
-		<verse>Do your balls hang low?
-Do they wobble to a fro?
-Can you tie ‘em in a knot?
-Can you tie ‘em in a bow?
-*Can you throw ‘em over your shoulder,
-*Like a continental soldier?
-Do your balls hang low?</verse>
-	</song>
 	<song group="DOWN DOWNS" name="MY NAME IS JACK">
 		<verse>My name is Jack (nah-na-nah-na-nah-na-nah),
 I’m a necrophiliac (nah-na-nah-na-nah-na-nah),
@@ -424,20 +414,98 @@ Sing us another one,
 Just like the other one,
 Sing us another one do.</verse>
 	</song>
+	<song group="TJH3 Song Book" name="It's a long song">
+<verse>This is a very long song,
+It’s called the down down song.</verse>
+<verse>Drink it down, down, down, down..</verse>
+	</song>
+	<song group="TJH3 Song Book" name="Jesus can't go hashing">
+<verse>Jesus can’t can’t go hashing cuz... he's hung like THIS
+Jesus can’t can’t go hashing cuz... he's hung like THIS.
+Jesus can’t can’t go hashing cuz... he's hung like THIS.
+Jesus saves, Jesus saves, Jesus saves.</verse>
+<info>Chorus:</info>
+<verse>Free beer for all the hashers...
+Free beer for all the hashers...
+Free beer for all the hashers...
+Jesus saves, Jesus saves, Jesus saves.</verse>
+<info>Alternates:</info>
+<verse>Jesus can’t wack off cuz...     he’s got holes in his hands     
+Jesus can’t go hashing cuz...   the Jews won't pay 5 bucks      
+Jesus can’t go hashing cuz...   the flour falls through his hands   
+Jesus can’t go hashing cuz...   of the shiggy on his head 
+Jesus can’t go hashing cuz...   the Mother Fuckers Dead      
+Jesus can’t go hashing cuz...   he runs like this              
+Jesus can’t go hashing cuz...   his dad knows all the chicks    
+Jesus can’t go hashing cuz...   he turns the flour into bread     
+Jesus can’t go hashing cuz...   his mum’s got the clap       (Bloody Apostles)                                      
+Jesus can’t go hashing cuz...   Mary Magdalene’s coming over  
+Jesus can’t go hashing cuz...   Abraham’s bringing in the sheep 
+Jesus can’t go hashing cuz...   The 12 (Gay) Apostles won’t go</verse>   
+</song> 
+	<song group="TJH3 Song Book" name="Weather outside if frightful">
+<info>(Melody - Let it Snow)</info>
+<verse>Well, the weather outside is frightful,
+But my dick is so delightful,
+If you really want to see it grow,
+Give it a blow, give it a blow, give it a blow.</verse>
+</song>
+	<song group="TJH3 Song Book" name="你是傻逼 (Chinese)">
+<verse>你是傻逼，你是猪。
+你是隔夜大尿壶
+不去做爱来跑步
+你是傻逼你是猪
+你是大尿壶！</verse>
+<info>(English)</info>
+<verse>Ni shi sha bi, ni shi zhu
+Ni shi ge ye da niao hu
+Bu Qu Zuo Ai Lai pao bu
+Ni shi sha bi ni shi zhu 
+Ni sh da niao hu!!
+Now drink it down, down, down!</verse>
+</song>
+	<song group="TJH3 Song Book" name="大便之歌 Da bian zhi ge (Chinese)">
+<info>配曲：好汉歌(Original melody, you can Google it from Google music. The singer’s name is 刘欢)</info>
+<verse>大便谁都有
+Da bian shui dou you 
+你有我有全都有
+Ni you wo you quan dou you
+拉不出来用手抠
+La bu chu lai yong shou kou
+该用手扣用手抠
+Gai yong shou kou yong shou kou
+风风火火用手抠呀
+Feng feng huo huo yong shou kou ya
+嗨哎呦 一嘿呦 嗨呦一嘿呦
+Hai ai you  yi hei you   hai you yi hei you
+拉不出来用手抠啊
+La bu chu lai yong shou kou a 
+该用手扣用手抠啊
+Gai yong shou kou a
+风风火火用手抠啊 
+Feng feng huo huo yong shou kou a</verse>
+<info>（抠 KOU1 means dig out with fingers）</info>
+	</song>
+	<song group="TJH3 Song Book" name="Inceset Time">
+	    <info>(Houston TEXAS HHH (TJH3 Song Book))</info>
+<verse>When it's incest time in texas and your sister can't be found, 
+and your mothers in the bathroom, with her panties halfway down.</verse>
+<verse>Theres no time for masturbation, theres no time to beat your meat,
+when its incest time in texas-mother fucking can't be beat</verse>
+	</song>
 	<song group="DOWN DOWNS" name="He's the Meanest">
 <verse>He's the meanest,
 He sucks the horse's penis,
 He's the meanest,
-He's a horse's ass.
-Ever since he found it,
+He's a horse's ass.</verse>
+<verse>Ever since he found it,
 All he does is pound it,
 He's the meanest,
-He's a horse's ass.
-He's always pissing on us,
+He's a horse's ass.</verse>
+<verse>He's always pissing on us,
 He's rotten and dishonest,
 He's the meanest,
-He's a horse's ass.
-</verse>	    
+He's a horse's ass.</verse>
 	</song> 
 	<song group="NATIONAL ANTHEMS" name="PISSONYA">
 		<verse>Pissonya, pissonya, pissonya
@@ -469,10 +537,8 @@ Bastards through and through.</verse>
 <info>Additional verses:</info>
 <verse>They don't know who the father is, who the father is, who the father is,
 They don't know who the father is, bastards through and through.</verse>
-<info></info>
 <verse>Father’s Day is a really sad holiday, really sad holiday, really sad holiday...
 They don’t know just who their fathers are, who their fathers are, who their fathers are...</verse>
-<info></info>
 <verse>All Canadians wish they were Americans, wish they were Americans, wish they were Americans...</verse>
 <verse>All Americans don't know geography, don't know geography, don't know geography...</verse>
 	</song>
@@ -491,7 +557,7 @@ Yankee pay 5 dollars more</verse>
 	</song>
 	<song group="NATIONAL ANTHEMS" name="BESTIALITY’S BEST BOYS">
 		<info>(Kiwi National Anthem)</info>
-		<info>Tune of Tie My Kangaroo Down, Sport)</info>
+		<info>(Tune of Tie My Kangaroo Down, Sport)</info>
 		<verse>Bestiality’s best, boys, bestiality’s best.
 Fuck a wallaby!
 Bestiality’s best, boys, bestiality’s best.
@@ -504,8 +570,7 @@ Fuck a wallaby!</verse>
 Fuck a wallaby!
 In the spunk of a skunk boys, in the spunk of a skunk.
 Fuck a wallaby!</verse>
-<verse>
-In the rear of a deer boys, in the rear of a deer.
+<verse>In the rear of a deer boys, in the rear of a deer.
 Fuck a wallaby!
 In the rear of a deer boys, in the rear of a deer.
 Fuck a wallaby!</verse>
@@ -538,16 +603,31 @@ Ou est le papier, ou est le papier;
 Monsieur, monsieur, j’ai fait ‘manure';
 Ou est le papier!</verse>
 	</song>
+	<song group="TJH3 Song Book" name="You're Stupid">
+	    <info>(Tianjin H3 Song Book)</info>
+<verse>You’re stupid
+You’re stupid
+You’re really fucking dumb
+If it wasn’t for your mother
+You’d be a pile of cum</verse>
+<info>Alternate:</info>
+<verse>Dumb, dumb, you're so dumb
+If it wasn’t for your mother
+You’d be a stain of cum</verse>
+	</song>
 	<song group="NATIONAL ANTHEMS" name="AMERICA, FUCK YEAH!">
 		<info>(Yank National Anthem)</info>
-		<verse>America, fuck yeah!
-Coming again to save the motherfucking day, yeah!
-America, fuck yeah!</verse>
+<verse>America, FUCK YEAH!</verse>
+<verse>Coming again to save the motherfucking day, yeah!
+America, FUCK YEAH!</verse>
 <verse>Freedom is the only way, yeah!
-Terrorists, your game is through,
-‘Cause now you’ll have to answer to,
-America, fuck yeah!</verse>
+Terrorists, your game is through, ‘cause now you’ll have to answer to,
+America, FUCK YEAH!</verse>
 <verse>So suck my dick and lick on my balls!</verse>
+<info>Alt: So lick my butt, and suck on my balls!</info>
+<verse>What you going to do when we come for you now, its the dream that we all share; its the hope for tomorrow
+FUCK YEAH!</verse>
+<info>(Last verse from the Tianjin HHH Song Book)</info>
 	</song>
 	<song group="NATIONAL ANTHEMS" name="LATIN-AMERICAN DOWN SONG">
 		<info>(Dazed &amp; Confused Special)</info>

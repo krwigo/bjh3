@@ -10,7 +10,7 @@
         android:layout_height="20sp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:background="#66FF66"
+        android:background="@android:color/transparent"
         android:visibility="visible" >
     </View>
 

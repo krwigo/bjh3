@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -36,6 +40,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources.Theme;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -83,12 +88,19 @@ public class MainActivity extends Activity {
 		public Song(Node inputNode) {
 			NamedNodeMap nnm = inputNode.getAttributes();
 			pNodes = inputNode.getChildNodes();
-			pName = nnm.getNamedItem("name").getNodeValue();
+			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase();
 			try {
 				pColor = nnm.getNamedItem("borderleft").getNodeValue();
 				Log.d("Z", "NNM got " + pColor);
 			} catch (Exception e) {
 			}
+		}
+	}
+
+	static class SongComparator implements Comparator<Song> {
+		public int compare(Song a, Song b) {
+			Log.d("Z", "SongCompare()");
+			return a.pName.compareTo(b.pName);
 		}
 	}
 
@@ -101,12 +113,27 @@ public class MainActivity extends Activity {
 		String[] fromFieldNames = new String[] { "title", "epochdate", "feed", (pDisplayURL ? "url" : "guid"), };
 		int[] toViewIDs = new int[] { R.id.tvName, R.id.tvDate, R.id.tvFeed, R.id.tvURL, };
 
+		String mQueryString;
+		Cursor c;
+
 		// String mQueryString =
 		// "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? and active>=? ORDER BY epoch DESC, _id DESC";
 		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
 		// String[] { title, (pDisplayOLD ? "0" : "1") });
-		String mQueryString = "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
-		Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { (pDisplayOLD ? "0" : "1") });
+		// String mQueryString =
+		// "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
+		// String[] { (pDisplayOLD ? "0" : "1") });
+
+		if (title.equals("BJH3")) {
+			// ALL
+			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+			c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { (pDisplayOLD ? "0" : "1") });
+		} else {
+			// SINGLE
+			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? AND active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+			c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { title, (pDisplayOLD ? "0" : "1") });
+		}
 
 		lv.setAdapter(new SimpleCursorAdapter(this, R.layout.fragment_listitem, c, fromFieldNames, toViewIDs, 0) {
 			public View getView(int position, View convertView, ViewGroup parent) {
@@ -114,14 +141,25 @@ public class MainActivity extends Activity {
 
 				TextView tvFeed = (TextView) v.findViewById(R.id.tvFeed);
 				View catColor = (View) v.findViewById(R.id.catColor);
-				if (tvFeed.getText().equals("BJH3"))
-					catColor.setBackgroundColor(Color.RED);
-				else if (tvFeed.getText().equals("Boxer"))
-					catColor.setBackgroundColor(Color.MAGENTA);
-				else if (tvFeed.getText().equals("FMH"))
-					catColor.setBackgroundColor(Color.GRAY);
-				else if (tvFeed.getText().equals("Trash"))
-					catColor.setBackgroundColor(Color.BLUE);
+
+				String[] feeds = tvFeed.getText().toString().split(", ");
+				Arrays.sort(feeds);
+				String feedSorted = "";
+				for (int i = 0; i < feeds.length; i++) {
+					if (i > 0)
+						feedSorted = feedSorted.concat("+");
+					feedSorted = feedSorted.concat(feeds[i]);
+
+					if (feeds[i].equals("Boxer"))
+						catColor.setBackgroundColor(Color.MAGENTA);
+					else if (feeds[i].equals("FMH"))
+						catColor.setBackgroundColor(Color.GRAY);
+					else if (feeds[i].equals("Trash"))
+						catColor.setBackgroundColor(Color.BLUE);
+					else if (feeds[i].equals("BJH3"))
+						catColor.setBackgroundColor(Color.RED);
+				}
+				tvFeed.setText(feedSorted);
 
 				v.setOnLongClickListener(new OnLongClickListener() {
 					@Override
@@ -137,7 +175,7 @@ public class MainActivity extends Activity {
 					}
 
 				});
-				
+
 				return v;
 			}
 		});
@@ -197,6 +235,8 @@ public class MainActivity extends Activity {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+
+					Collections.sort(pList, new SongComparator());
 				}
 				return pList.size();
 			}
@@ -240,6 +280,14 @@ public class MainActivity extends Activity {
 					public void onClick(View v) {
 						LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
 						lyricLayout.setVisibility(lyricLayout.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+
+						try {
+							ListView lvParent = (ListView) v.getParent();
+							int vPos = lvParent.getPositionForView(v);
+							if (vPos + 1 == lvParent.getCount())
+								lvParent.setSelection(vPos);
+						} catch (Exception e) {
+						}
 					}
 				});
 
@@ -274,9 +322,9 @@ public class MainActivity extends Activity {
 
 		// Views
 		mhViews.put("BJH3", inflateList("BJH3"));
-		// mhViews.put("Boxer", inflateList("Boxer"));
-		// mhViews.put("FMH", inflateList("FMH"));
-		// mhViews.put("Trash", inflateList("Trash"));
+		mhViews.put("FMH", inflateList("FMH"));
+		mhViews.put("Boxer", inflateList("Boxer"));
+		mhViews.put("Trash", inflateList("Trash"));
 		mhViews.put("Songs", mViewSongs);
 		// mhViews.put("Map", inflater.inflate(R.layout.fragment_map, null));
 
@@ -334,9 +382,9 @@ public class MainActivity extends Activity {
 		mActionBar.setTitle("Beijing Hash House Harriers");
 		mActionBar.removeAllTabs();
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("BJH3"));
-		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Boxer"));
-		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("FMH"));
-		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
+		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("FMH"));
+		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Boxer"));
+		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Songs"));
 		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Map"));
 	}
@@ -459,6 +507,7 @@ public class MainActivity extends Activity {
 				pDialog.dismiss();
 
 			AlertDialog pAlert = new AlertDialog.Builder(MainActivity.this).create();
+			// pAlert.setIcon(android.R.drawable.checkbox_on_background);
 			pAlert.setTitle("Update");
 			pAlert.setCancelable(true);
 
