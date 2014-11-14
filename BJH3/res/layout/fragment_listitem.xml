@@ -4,23 +4,17 @@
     android:layout_height="match_parent"
     android:padding="10sp" >
 
-    <View
-        android:id="@+id/catColor"
-        android:layout_width="20sp"
-        android:layout_height="20sp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:background="@android:color/transparent"
-        android:visibility="visible" >
-    </View>
-
     <TextView
         android:id="@+id/tvName"
         style="@android:style/TextAppearance.Large"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true" >
+        android:layout_alignParentTop="true"
+        android:ellipsize="end"
+        android:lines="1"
+        android:maxLines="1"
+        android:singleLine="true" >
     </TextView>
 
     <TextView
@@ -28,8 +22,9 @@
         style="@android:style/TextAppearance.Medium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/tvURL"
+        android:layout_alignParentRight="true"
         android:layout_below="@+id/tvURL"
+        android:layout_margin="5sp"
         android:textColor="@android:color/tertiary_text_light"
         android:textStyle="italic" >
     </TextView>
@@ -39,20 +34,24 @@
         style="@android:style/TextAppearance.Medium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/tvDate"
-        android:layout_marginLeft="5sp"
-        android:layout_toRightOf="@+id/tvDate" >
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/tvURL"
+        android:layout_margin="5sp"
+        android:drawableLeft="@drawable/bullet_square10"
+        android:drawablePadding="6dp"
+        android:textColor="@android:color/tertiary_text_light" >
     </TextView>
 
     <TextView
         android:id="@+id/tvURL"
         style="@android:style/TextAppearance.Medium"
-        android:textColorLink="@android:color/darker_gray"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/tvName"
         android:layout_below="@+id/tvName"
-        android:autoLink="web" >
+        android:autoLink="web"
+        android:textColorLink="@android:color/darker_gray"
+        android:visibility="gone" >
     </TextView>
 
 </RelativeLayout>

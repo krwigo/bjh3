@@ -20,6 +20,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import com.darksidebio.bjh3.R;
+//import com.tencent.mm.sdk.openapi.BaseReq;
+//import com.tencent.mm.sdk.openapi.IWXAPI;
+//import com.tencent.mm.sdk.openapi.SendMessageToWX;
+//import com.tencent.mm.sdk.openapi.WXAPIFactory;
+//import com.tencent.mm.sdk.openapi.WXMediaMessage;
+//import com.tencent.mm.sdk.openapi.WXWebpageObject;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
@@ -34,17 +40,20 @@ import android.app.FragmentTransaction;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -65,6 +74,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -77,29 +87,33 @@ public class MainActivity extends Activity {
 	LayoutInflater svc_inflater;
 	SharedPreferences mPrefs;
 	ListView mViewSongs;
+//	ProgressBar mProgress;
 
 	static Database mDatabase;
 	public final HashMap<String, View> mhViews = new HashMap<String, View>();
 
 	class Song {
-		String pName, pColor;
+		String pName, pColor, pGroup, pCompareString;
 		NodeList pNodes;
 
 		public Song(Node inputNode) {
 			NamedNodeMap nnm = inputNode.getAttributes();
 			pNodes = inputNode.getChildNodes();
-			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase();
+
 			try {
-				pColor = nnm.getNamedItem("borderleft").getNodeValue();
-				Log.d("Z", "NNM got " + pColor);
+				pGroup = nnm.getNamedItem("group").getNodeValue();
 			} catch (Exception e) {
+				pGroup = "none";
 			}
+
+			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase();
+			pCompareString = pGroup + pName;
 		}
 	}
 
 	static class SongComparator implements Comparator<Song> {
 		public int compare(Song a, Song b) {
-			Log.d("Z", "SongCompare()");
+			// return a.pCompareString.compareTo(b.pCompareString);
 			return a.pName.compareTo(b.pName);
 		}
 	}
@@ -125,13 +139,14 @@ public class MainActivity extends Activity {
 		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
 		// String[] { (pDisplayOLD ? "0" : "1") });
 
+		// strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch')
 		if (title.equals("BJH3")) {
 			// ALL
-			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%m/%d %H:%M',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
 			c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { (pDisplayOLD ? "0" : "1") });
 		} else {
 			// SINGLE
-			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? AND active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
+			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%m/%d %H:%M',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? AND active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
 			c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new String[] { title, (pDisplayOLD ? "0" : "1") });
 		}
 
@@ -140,7 +155,9 @@ public class MainActivity extends Activity {
 				View v = super.getView(position, convertView, parent);
 
 				TextView tvFeed = (TextView) v.findViewById(R.id.tvFeed);
-				View catColor = (View) v.findViewById(R.id.catColor);
+
+				Resources res = getResources();
+				final Drawable drawable = res.getDrawable(R.drawable.bullet_square10);
 
 				String[] feeds = tvFeed.getText().toString().split(", ");
 				Arrays.sort(feeds);
@@ -151,26 +168,87 @@ public class MainActivity extends Activity {
 					feedSorted = feedSorted.concat(feeds[i]);
 
 					if (feeds[i].equals("Boxer"))
-						catColor.setBackgroundColor(Color.MAGENTA);
+						((GradientDrawable) drawable).setColor(0xFF7FA016);// green
 					else if (feeds[i].equals("FMH"))
-						catColor.setBackgroundColor(Color.GRAY);
+						((GradientDrawable) drawable).setColor(0xFF39A4C6);// blue
 					else if (feeds[i].equals("Trash"))
-						catColor.setBackgroundColor(Color.BLUE);
+						((GradientDrawable) drawable).setColor(0xFFAF96FF);// purple
 					else if (feeds[i].equals("BJH3"))
-						catColor.setBackgroundColor(Color.RED);
+						((GradientDrawable) drawable).setColor(0xFFFFB759);// orange
 				}
+
+				drawable.mutate();
+				tvFeed.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
 				tvFeed.setText(feedSorted);
+
+				v.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View itemview) {
+						TextView tvURL = (TextView) itemview.findViewById(R.id.tvURL);
+						Intent i = new Intent(Intent.ACTION_VIEW);
+						i.setData(Uri.parse(tvURL.getText().toString()));
+						startActivity(i);
+					}
+				});
 
 				v.setOnLongClickListener(new OnLongClickListener() {
 					@Override
 					public boolean onLongClick(View itemview) {
 						TextView tvName = (TextView) itemview.findViewById(R.id.tvName);
 						TextView tvURL = (TextView) itemview.findViewById(R.id.tvURL);
+						String shareText = tvName.getText() + "\n" + tvURL.getText();
 
 						ClipboardManager svc_clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-						svc_clipboard.setText(tvName.getText() + "\n" + tvURL.getText());
+						svc_clipboard.setText(shareText);
 
 						Toast.makeText(MainActivity.this, "Successfully Copied", Toast.LENGTH_SHORT).show();
+
+						// // Test SEND:begin
+						// Uri shareURI = Uri.parse(tvURL.getText().toString());
+						//
+						// Intent intSend = new Intent(Intent.ACTION_SEND);
+						// // Intent intSend = new Intent(Intent.ACTION_VIEW);
+						//
+						// intSend.setPackage("com.tencent.mm");// 直接打开微信
+						// // intSend.putExtra(Intent.EXTRA_SUBJECT, "Share");
+						// // intSend.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						//
+						// // ComponentName componentName = new
+						// // ComponentName("com.tencent.mm",
+						// // "com.tencent.mm.ui.tools.ShareImgUI");
+						// // intSend.setComponent(componentName);
+						//
+						// // intSend.setType("image/*");
+						// intSend.setType("text/html");
+						// // intSend.setType("text/plain");
+						// String h =
+						// "<html><body>Something <a href='http://baidu.com'>http://baidu.com</a> done</body></html>";
+						//
+						// intSend.setData(shareURI);
+						// //intSend.putExtra(Intent.EXTRA_SUBJECT,
+						// tvName.getText().toString());
+						// //intSend.putExtra(Intent.EXTRA_TEXT,
+						// tvURL.getText().toString());
+						// //intSend.setData(h);
+						// intSend.putExtra(Intent.EXTRA_SUBJECT, "subj");
+						// intSend.putExtra(Intent.EXTRA_TEXT, h);
+						// // intSend.putExtra("sms_body", shareText);
+						// // intSend.putExtra(Intent.EXTRA_STREAM,
+						// // getResources().( R.drawable.beijing_trans96beer));
+						//
+						// // intent.setType("image/*");//分享发送的数据类型
+						// // intent.putExtra(Intent.EXTRA_SUBJECT,
+						// "主题");//分享的主题
+						// // intent.putExtra(Intent.EXTRA_TEXT, "分享内容");//分享的内容
+						// // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						// //
+						// intent.putExtra(Intent.EXTRA_STREAM,Uri.parse("file:////sdcard//ganyibei.png"));//分享的图片
+						//
+						// startActivity(Intent.createChooser(intSend,
+						// "Share"));
+						// // startActivity(intSend);
+						// // Test SEND:end
+
 						return false;
 					}
 
@@ -212,10 +290,33 @@ public class MainActivity extends Activity {
 		f.addAction("STATUS_DATACHANGE");
 		registerReceiver(br, f);
 
+		// // WX
+		// try {
+		// String wx_api_key = "";
+		// IWXAPI api = WXAPIFactory.createWXAPI(this, wx_api_key, true);
+		// api.registerApp(wx_api_key);
+		//
+		// WXWebpageObject webpage = new WXWebpageObject();
+		// webpage.webpageUrl = "http://www.wechat.com";
+		//
+		// WXMediaMessage msg = new WXMediaMessage(webpage);
+		// msg.title = "Wechat homepage";
+		// msg.description = "Welcome to Wechat!";
+		//
+		// SendMessageToWX.Req req = new SendMessageToWX.Req();
+		// req.message = msg;
+		// req.scene = SendMessageToWX.Req.WXSceneSession;
+		//
+		// api.sendReq(req);
+		// } catch (Exception e) {
+		// Log.d("Z", "WXAPI: " + e);
+		// }
+
 		// Views - init
 		mViewSongs = (ListView) svc_inflater.inflate(R.layout.fragment_songlist, null);
 		mViewSongs.setAdapter(new BaseAdapter() {
 			ArrayList<Song> pList = null;
+			HashMap<String, Integer> pGroupColors = new HashMap<String, Integer>();
 
 			@Override
 			public int getCount() {
@@ -267,13 +368,23 @@ public class MainActivity extends Activity {
 				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
 				lyricLayout.setVisibility(View.GONE);
 
+				// // Group Color
+				// Resources res = getResources();
+				// final Drawable drawable =
+				// res.getDrawable(R.drawable.bullet_square10);
 				// try {
-				// // android:background="@drawable/border_left_red"
-				// v.setBackgroundResource(getResources().getIdentifier("drawable/"
-				// + mySong.pColor, null, getPackageName()));
+				// // existing color
+				// ((GradientDrawable)
+				// drawable).setColor(pGroupColors.get(mySong.pGroup));
 				// } catch (Exception e) {
-				// e.printStackTrace();
+				// // new color
+				// ((GradientDrawable)
+				// drawable).setColor(pGroupColors.put(mySong.pGroup,
+				// 0xFF00FFFF));
 				// }
+				// drawable.mutate();
+				// tvName.setCompoundDrawablesWithIntrinsicBounds(drawable,
+				// null, null, null);
 
 				v.setOnClickListener(new OnClickListener() {
 					@Override
@@ -387,6 +498,9 @@ public class MainActivity extends Activity {
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
 		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Songs"));
 		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Map"));
+
+		// ProgressBar
+//		mProgress = (ProgressBar) findViewById(R.id.progressBar1);
 	}
 
 	public long getDexCRC() {
@@ -440,11 +554,16 @@ public class MainActivity extends Activity {
 			if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
 				if (mActionBar.getSubtitle() != null && mActionBar.getSubtitle().length() > 0) {
 					mActionBar.setSubtitle(mActionBar.getSubtitle() + ".");
+//					mProgress.setProgress(mProgress.getProgress()+20);
+//					mProgress.setVisibility(View.VISIBLE);
 				} else {
 					mActionBar.setSubtitle("Updating..");
+//					mProgress.setProgress(20);
+//					mProgress.setVisibility(View.VISIBLE);
 				}
 			} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
 				mActionBar.setSubtitle(null);
+//				mProgress.setVisibility(View.GONE);
 			} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
 				for (String key : mhViews.keySet()) {
 					try {

@@ -10,7 +10,15 @@
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity" >
-    </android.support.v4.view.ViewPager>
+        tools:context=".MainActivity" />
+
+<!--     <ProgressBar -->
+<!--         android:id="@+id/progressBar1" -->
+<!--         style="?android:attr/progressBarStyleHorizontal" -->
+<!--         android:layout_width="match_parent" -->
+<!--         android:layout_height="12sp" -->
+<!--         android:background="#000000" -->
+<!--         android:layout_alignParentBottom="true" -->
+<!--         android:visibility="gone" /> -->
 
 </RelativeLayout>

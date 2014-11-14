@@ -10,8 +10,8 @@
         style="@android:style/TextAppearance.Large"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textStyle="bold" >
-    </TextView>
+        android:drawablePadding="8dp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:id="@+id/songLyrics"
@@ -20,7 +20,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="10sp"
-        android:paddingTop="10sp" >
-    </LinearLayout>
+        android:paddingTop="10sp" />
 
 </LinearLayout>
