@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10sp" >
+    android:padding="5sp">
 
     <TextView
         android:id="@+id/tvName"
@@ -14,8 +13,7 @@
         android:ellipsize="end"
         android:lines="1"
         android:maxLines="1"
-        android:singleLine="true" >
-    </TextView>
+        android:singleLine="true" />
 
     <TextView
         android:id="@+id/tvDate"
@@ -24,10 +22,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/tvURL"
-        android:layout_margin="5sp"
-        android:textColor="@android:color/tertiary_text_light"
-        android:textStyle="italic" >
-    </TextView>
+        android:drawablePadding="6sp"
+        android:textColor="@android:color/tertiary_text_light" />
 
     <TextView
         android:id="@+id/tvFeed"
@@ -36,11 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/tvURL"
-        android:layout_margin="5sp"
-        android:drawableLeft="@drawable/bullet_square10"
-        android:drawablePadding="6dp"
-        android:textColor="@android:color/tertiary_text_light" >
-    </TextView>
+        android:textColor="@android:color/tertiary_text_light" />
 
     <TextView
         android:id="@+id/tvURL"
@@ -51,7 +43,6 @@
         android:layout_below="@+id/tvName"
         android:autoLink="web"
         android:textColorLink="@android:color/darker_gray"
-        android:visibility="gone" >
-    </TextView>
+        android:visibility="gone" />
 
 </RelativeLayout>

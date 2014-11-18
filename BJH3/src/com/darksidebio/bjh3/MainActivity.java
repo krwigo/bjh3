@@ -1,63 +1,36 @@
 package com.darksidebio.bjh3;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import com.darksidebio.bjh3.R;
-//import com.tencent.mm.sdk.openapi.BaseReq;
-//import com.tencent.mm.sdk.openapi.IWXAPI;
-//import com.tencent.mm.sdk.openapi.SendMessageToWX;
-//import com.tencent.mm.sdk.openapi.WXAPIFactory;
-//import com.tencent.mm.sdk.openapi.WXMediaMessage;
-//import com.tencent.mm.sdk.openapi.WXWebpageObject;
-
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.ActionBar.Tab;
-import android.app.ActionBar.TabListener;
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.AlertDialog;
-import android.app.DownloadManager;
-import android.app.DownloadManager.Request;
-import android.app.FragmentTransaction;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
-import android.content.res.Resources.Theme;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -74,23 +47,22 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
+import android.widget.TabHost;
+import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-@SuppressWarnings({ "unused", "deprecation" })
+@SuppressWarnings("deprecation")
 public class MainActivity extends Activity {
-	AlarmManager svc_alarm;
+	BroadcastReceiver mBroadcastReceiver;
+	TabHost mViewHost;
 	ViewPager mViewPager;
-	ActionBar mActionBar;
-	TabListener mTabListener;
+	AlarmManager svc_alarm;
 	LayoutInflater svc_inflater;
 	SharedPreferences mPrefs;
-	ListView mViewSongs;
-//	ProgressBar mProgress;
-
+	Resources mResources;
 	static Database mDatabase;
-	public final HashMap<String, View> mhViews = new HashMap<String, View>();
+	ArrayList<View> mTabList = new ArrayList<View>();
 
 	class Song {
 		String pName, pColor, pGroup, pCompareString;
@@ -106,7 +78,7 @@ public class MainActivity extends Activity {
 				pGroup = "none";
 			}
 
-			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase();
+			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase(Locale.ENGLISH);
 			pCompareString = pGroup + pName;
 		}
 	}
@@ -130,16 +102,6 @@ public class MainActivity extends Activity {
 		String mQueryString;
 		Cursor c;
 
-		// String mQueryString =
-		// "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE feed=? and active>=? ORDER BY epoch DESC, _id DESC";
-		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
-		// String[] { title, (pDisplayOLD ? "0" : "1") });
-		// String mQueryString =
-		// "SELECT id as _id, feed, title, url, guid, strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
-		// Cursor c = mDatabase.getReadableDatabase().rawQuery(mQueryString, new
-		// String[] { (pDisplayOLD ? "0" : "1") });
-
-		// strftime('%Y-%m-%d %H:%M:%S',epoch,'unixepoch')
 		if (title.equals("BJH3")) {
 			// ALL
 			mQueryString = "SELECT id as _id, group_concat(feed,', ') as feed, title, url, guid, strftime('%m/%d %H:%M',epoch,'unixepoch') as epochdate FROM feeditems WHERE active>=? GROUP BY guid ORDER BY epoch DESC, _id DESC";
@@ -155,9 +117,9 @@ public class MainActivity extends Activity {
 				View v = super.getView(position, convertView, parent);
 
 				TextView tvFeed = (TextView) v.findViewById(R.id.tvFeed);
+				TextView tvDate = (TextView) v.findViewById(R.id.tvDate);
 
-				Resources res = getResources();
-				final Drawable drawable = res.getDrawable(R.drawable.bullet_square10);
+				Drawable drawable = mResources.getDrawable(R.drawable.bullet_square10);
 
 				String[] feeds = tvFeed.getText().toString().split(", ");
 				Arrays.sort(feeds);
@@ -174,11 +136,11 @@ public class MainActivity extends Activity {
 					else if (feeds[i].equals("Trash"))
 						((GradientDrawable) drawable).setColor(0xFFAF96FF);// purple
 					else if (feeds[i].equals("BJH3"))
-						((GradientDrawable) drawable).setColor(0xFFFFB759);// orange
+						((GradientDrawable) drawable).setColor(0xFFFF6600);// orange
 				}
 
 				drawable.mutate();
-				tvFeed.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+				tvDate.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
 				tvFeed.setText(feedSorted);
 
 				v.setOnClickListener(new OnClickListener() {
@@ -202,56 +164,8 @@ public class MainActivity extends Activity {
 						svc_clipboard.setText(shareText);
 
 						Toast.makeText(MainActivity.this, "Successfully Copied", Toast.LENGTH_SHORT).show();
-
-						// // Test SEND:begin
-						// Uri shareURI = Uri.parse(tvURL.getText().toString());
-						//
-						// Intent intSend = new Intent(Intent.ACTION_SEND);
-						// // Intent intSend = new Intent(Intent.ACTION_VIEW);
-						//
-						// intSend.setPackage("com.tencent.mm");// 直接打开微信
-						// // intSend.putExtra(Intent.EXTRA_SUBJECT, "Share");
-						// // intSend.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-						//
-						// // ComponentName componentName = new
-						// // ComponentName("com.tencent.mm",
-						// // "com.tencent.mm.ui.tools.ShareImgUI");
-						// // intSend.setComponent(componentName);
-						//
-						// // intSend.setType("image/*");
-						// intSend.setType("text/html");
-						// // intSend.setType("text/plain");
-						// String h =
-						// "<html><body>Something <a href='http://baidu.com'>http://baidu.com</a> done</body></html>";
-						//
-						// intSend.setData(shareURI);
-						// //intSend.putExtra(Intent.EXTRA_SUBJECT,
-						// tvName.getText().toString());
-						// //intSend.putExtra(Intent.EXTRA_TEXT,
-						// tvURL.getText().toString());
-						// //intSend.setData(h);
-						// intSend.putExtra(Intent.EXTRA_SUBJECT, "subj");
-						// intSend.putExtra(Intent.EXTRA_TEXT, h);
-						// // intSend.putExtra("sms_body", shareText);
-						// // intSend.putExtra(Intent.EXTRA_STREAM,
-						// // getResources().( R.drawable.beijing_trans96beer));
-						//
-						// // intent.setType("image/*");//分享发送的数据类型
-						// // intent.putExtra(Intent.EXTRA_SUBJECT,
-						// "主题");//分享的主题
-						// // intent.putExtra(Intent.EXTRA_TEXT, "分享内容");//分享的内容
-						// // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-						// //
-						// intent.putExtra(Intent.EXTRA_STREAM,Uri.parse("file:////sdcard//ganyibei.png"));//分享的图片
-						//
-						// startActivity(Intent.createChooser(intSend,
-						// "Share"));
-						// // startActivity(intSend);
-						// // Test SEND:end
-
 						return false;
 					}
-
 				});
 
 				return v;
@@ -261,7 +175,7 @@ public class MainActivity extends Activity {
 
 	public View inflateList(String title) {
 		View v = svc_inflater.inflate(R.layout.fragment_list, null);
-		v.setTag(1);
+		v.setTag(title);
 		ListView lv = (ListView) v.findViewById(R.id.flist);
 		attachCursorAdapter(title, lv);
 		return v;
@@ -271,60 +185,68 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d("Z", "[MAIN] Create()");
 		super.onCreate(savedInstanceState);
+		setTitle(getResources().getString(R.string.app_name_long));
 		setContentView(R.layout.activity_main);
-		mViewPager = (ViewPager) findViewById(R.id.pager);
-		svc_inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-		// Backend
+		mViewHost = (TabHost) findViewById(R.id.myhost);
+		mViewPager = (ViewPager) findViewById(R.id.pager);
+
+		svc_inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		svc_alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+		mResources = getResources();
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		mDatabase = new Database(this);
 
+		// Timer
 		PendingIntent mTimerIntent = PendingIntent.getBroadcast(this, 0, new Intent(this, Alarm.class), 0);
-		svc_alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
 		svc_alarm.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 0, 60000, mTimerIntent);
 
-		MyLoadingBroadcastReceiver br = new MyLoadingBroadcastReceiver();
+		// Messages
+		mBroadcastReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context c, Intent i) {
+				if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
+					// Updating..
+				} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
+					// Updated
+				} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
+					// Data changed, Update adapters
+					for (View v : mTabList) {
+						try {
+							if (v != null && v.getTag() != null && v.getTag().equals(1)) {
+								ListView lv = (ListView) v.findViewById(R.id.flist);
+								if (lv != null) {
+									attachCursorAdapter((String) v.getTag(), lv);
+								}
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		};
+
 		IntentFilter f = new IntentFilter();
 		f.addAction("STATUS_UPDATING");
 		f.addAction("STATUS_UPDATED");
 		f.addAction("STATUS_DATACHANGE");
-		registerReceiver(br, f);
+		registerReceiver(mBroadcastReceiver, f);
 
-		// // WX
-		// try {
-		// String wx_api_key = "";
-		// IWXAPI api = WXAPIFactory.createWXAPI(this, wx_api_key, true);
-		// api.registerApp(wx_api_key);
-		//
-		// WXWebpageObject webpage = new WXWebpageObject();
-		// webpage.webpageUrl = "http://www.wechat.com";
-		//
-		// WXMediaMessage msg = new WXMediaMessage(webpage);
-		// msg.title = "Wechat homepage";
-		// msg.description = "Welcome to Wechat!";
-		//
-		// SendMessageToWX.Req req = new SendMessageToWX.Req();
-		// req.message = msg;
-		// req.scene = SendMessageToWX.Req.WXSceneSession;
-		//
-		// api.sendReq(req);
-		// } catch (Exception e) {
-		// Log.d("Z", "WXAPI: " + e);
-		// }
-
-		// Views - init
-		mViewSongs = (ListView) svc_inflater.inflate(R.layout.fragment_songlist, null);
-		mViewSongs.setAdapter(new BaseAdapter() {
+		// Songs
+		ListView viewSongs = (ListView) svc_inflater.inflate(R.layout.fragment_songlist, null);
+		viewSongs.setTag("Songs");
+		viewSongs.setAdapter(new BaseAdapter() {
 			ArrayList<Song> pList = null;
-			HashMap<String, Integer> pGroupColors = new HashMap<String, Integer>();
 
 			@Override
 			public int getCount() {
-				// Render Songs
 				if (pList == null) {
 					pList = new ArrayList<Song>();
 
 					try {
+						Log.d("Z", "Opening songs.xml ..");
 						DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 						DocumentBuilder db = dbf.newDocumentBuilder();
 						Document doc = db.parse(getAssets().open("songs.xml"));
@@ -358,8 +280,8 @@ public class MainActivity extends Activity {
 				// if (v != null)
 				// return v;
 
-				Song mySong = this.getItem(pos);
-				v = LayoutInflater.from(MainActivity.this).inflate(R.layout.fragment_songitem, null);
+				Song mySong = getItem(pos);
+				v = svc_inflater.inflate(R.layout.fragment_songitem, null);
 
 				TextView tvName = (TextView) v.findViewById(R.id.songName);
 				tvName.setText(mySong.pName);
@@ -367,24 +289,6 @@ public class MainActivity extends Activity {
 				// Lyrics
 				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
 				lyricLayout.setVisibility(View.GONE);
-
-				// // Group Color
-				// Resources res = getResources();
-				// final Drawable drawable =
-				// res.getDrawable(R.drawable.bullet_square10);
-				// try {
-				// // existing color
-				// ((GradientDrawable)
-				// drawable).setColor(pGroupColors.get(mySong.pGroup));
-				// } catch (Exception e) {
-				// // new color
-				// ((GradientDrawable)
-				// drawable).setColor(pGroupColors.put(mySong.pGroup,
-				// 0xFF00FFFF));
-				// }
-				// drawable.mutate();
-				// tvName.setCompoundDrawablesWithIntrinsicBounds(drawable,
-				// null, null, null);
 
 				v.setOnClickListener(new OnClickListener() {
 					@Override
@@ -431,33 +335,40 @@ public class MainActivity extends Activity {
 
 		});
 
-		// Views
-		mhViews.put("BJH3", inflateList("BJH3"));
-		mhViews.put("FMH", inflateList("FMH"));
-		mhViews.put("Boxer", inflateList("Boxer"));
-		mhViews.put("Trash", inflateList("Trash"));
-		mhViews.put("Songs", mViewSongs);
-		// mhViews.put("Map", inflater.inflate(R.layout.fragment_map, null));
-
-		// Handlers
-		mTabListener = new TabListener() {
+		// TabHost
+		mViewHost.setup();
+		mViewHost.setOnTabChangedListener(new OnTabChangeListener() {
 			@Override
-			public void onTabSelected(Tab t, FragmentTransaction f) {
-				mViewPager.setCurrentItem(t.getPosition());
+			public void onTabChanged(String tabname) {
+				try {
+					mViewPager.setCurrentItem(mViewHost.getCurrentTab());
+				} catch (Exception e) {
+					Log.d("Z", "mViewPager.setCurrentItem() failed");
+				}
 			}
+		});
 
-			@Override
-			public void onTabUnselected(Tab t, FragmentTransaction f) {
-			}
+		// Add Tabs
+		// ,getResources().getDrawable(R.drawable.beijing_trans96beer)
+		mViewHost.addTab(mViewHost.newTabSpec("BJH3").setContent(R.id.blanktab).setIndicator("BJH3"));
+		mTabList.add(inflateList("BJH3"));
 
-			@Override
-			public void onTabReselected(Tab t, FragmentTransaction f) {
-			}
-		};
+		mViewHost.addTab(mViewHost.newTabSpec("FMH").setContent(R.id.blanktab).setIndicator("FMH"));
+		mTabList.add(inflateList("FMH"));
 
+		mViewHost.addTab(mViewHost.newTabSpec("Boxer").setContent(R.id.blanktab).setIndicator("Boxer"));
+		mTabList.add(inflateList("Boxer"));
+
+		mViewHost.addTab(mViewHost.newTabSpec("Trash").setContent(R.id.blanktab).setIndicator("Trash"));
+		mTabList.add(inflateList("Trash"));
+
+		mViewHost.addTab(mViewHost.newTabSpec("Songs").setContent(R.id.blanktab).setIndicator("Songs"));
+		mTabList.add(viewSongs);
+
+		// ViewPager
 		mViewPager.setAdapter(new PagerAdapter() {
 			public Object instantiateItem(ViewGroup cont, int pos) {
-				View layout = (View) mhViews.get(mActionBar.getTabAt(pos).getText());
+				View layout = mTabList.get(pos);
 				cont.addView(layout);
 				return layout;
 			}
@@ -468,12 +379,12 @@ public class MainActivity extends Activity {
 
 			@Override
 			public int getCount() {
-				return mhViews.size();
+				return mTabList.size();
 			}
 
 			@Override
 			public boolean isViewFromObject(View v, Object obj) {
-				return v == obj;
+				return (v == obj);
 			}
 		});
 
@@ -481,26 +392,36 @@ public class MainActivity extends Activity {
 			@Override
 			public void onPageSelected(int position) {
 				try {
-					getActionBar().setSelectedNavigationItem(position);
+					mViewHost.setCurrentTab(position);
 				} catch (Exception e) {
+					Log.d("Z", "mViewHost.setCurrentTab() failed");
 				}
 			}
 		});
 
-		// ActionBar
-		mActionBar = getActionBar();
-		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-		mActionBar.setTitle("Beijing Hash House Harriers");
-		mActionBar.removeAllTabs();
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("BJH3"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("FMH"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Boxer"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Trash"));
-		mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Songs"));
-		// mActionBar.addTab(mActionBar.newTab().setTabListener(mTabListener).setText("Map"));
+		// Update on launch
+		try {
+			if (mPrefs.getBoolean("allow_autoupdate", true)) {
+				long updater_lastrun = mPrefs.getLong("INTERNAL_UPDATER_LASTRUN", 0);
+				long updater_now = System.currentTimeMillis() / 1000;
+				if (updater_lastrun > updater_now || updater_lastrun + (24 * 3600) < updater_now) {
+					// Launch updater every 24 hours
+					new UpdateTask(this, true, Long.toString(getDexCRC())).execute();
+					Editor prefEdit = mPrefs.edit();
+					// Mark now as last run
+					prefEdit.putLong("INTERNAL_UPDATER_LASTRUN", System.currentTimeMillis() / 1000);
+					prefEdit.commit();
+				}
+			}
+		} catch (Exception e) {
+			Log.d("Z", "Updater; Exception during daily App Update check: " + e.toString());
+		}
+	}
 
-		// ProgressBar
-//		mProgress = (ProgressBar) findViewById(R.id.progressBar1);
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		unregisterReceiver(mBroadcastReceiver);
 	}
 
 	public long getDexCRC() {
@@ -530,7 +451,14 @@ public class MainActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.action_settings:
+			// Open Settings
 			startActivityForResult(new Intent(this, PrefsActivity.class), 0);
+			return true;
+		case R.id.action_website:
+			// Open Website
+			Intent web = new Intent(Intent.ACTION_VIEW);
+			web.setData(Uri.parse("http://www.hash.cn"));
+			startActivity(web);
 			return true;
 		case R.id.action_update:
 			// Reset Times
@@ -541,116 +469,11 @@ public class MainActivity extends Activity {
 			startService(new Intent(this, Downloader.class));
 			return true;
 		case R.id.action_update_app:
-			new UpdateTask().execute();
+			// Updater
+			new UpdateTask(this, false, Long.toString(getDexCRC())).execute();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
-	class MyLoadingBroadcastReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context c, Intent i) {
-			Log.d("Z", "MyLoadingBroadcastReceiver.onReceive: " + i.getAction());
-			if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
-				if (mActionBar.getSubtitle() != null && mActionBar.getSubtitle().length() > 0) {
-					mActionBar.setSubtitle(mActionBar.getSubtitle() + ".");
-//					mProgress.setProgress(mProgress.getProgress()+20);
-//					mProgress.setVisibility(View.VISIBLE);
-				} else {
-					mActionBar.setSubtitle("Updating..");
-//					mProgress.setProgress(20);
-//					mProgress.setVisibility(View.VISIBLE);
-				}
-			} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
-				mActionBar.setSubtitle(null);
-//				mProgress.setVisibility(View.GONE);
-			} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
-				for (String key : mhViews.keySet()) {
-					try {
-						View v = mhViews.get(key);
-						if (v != null && v.getTag() != null && v.getTag().equals(1)) {
-							ListView lv = (ListView) v.findViewById(R.id.flist);
-							attachCursorAdapter(key, lv);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-
-	private class UpdateTask extends AsyncTask<Void, Void, String> {
-		private ProgressDialog pDialog = null;
-
-		protected void onPreExecute() {
-			super.onPreExecute();
-			pDialog = ProgressDialog.show(MainActivity.this, "Update", "Checking for updates..");
-			pDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			pDialog.setCancelable(true);
-			pDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-				@Override
-				public void onCancel(DialogInterface d) {
-					UpdateTask.this.cancel(true);
-				}
-			});
-			pDialog.show();
-		}
-
-		@Override
-		protected String doInBackground(Void... none) {
-			try {
-				URL url = new URL("http://www.darksidebio.com/android/bjh3/version.cgi");
-				URLConnection con = url.openConnection();
-				con.setConnectTimeout(30000);
-				con.setReadTimeout(30000);
-
-				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-				DocumentBuilder db = dbf.newDocumentBuilder();
-				Document doc = db.parse(new InputSource(con.getInputStream()));
-				doc.getDocumentElement().normalize();
-
-				String crc_rem = doc.getDocumentElement().getAttribute("crc");
-				String crc_loc = Long.toString(getDexCRC());
-				return (crc_loc.equals(crc_rem) ? "Already using latest version." : "An update is available.");
-			} catch (Exception e) {
-				e.printStackTrace();
-				return e.getMessage();
-			}
-		}
-
-		protected void onPostExecute(final String sResponse) {
-			super.onPostExecute(sResponse);
-
-			if (pDialog.isShowing())
-				pDialog.dismiss();
-
-			AlertDialog pAlert = new AlertDialog.Builder(MainActivity.this).create();
-			// pAlert.setIcon(android.R.drawable.checkbox_on_background);
-			pAlert.setTitle("Update");
-			pAlert.setCancelable(true);
-
-			pAlert.setButton("Close", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface arg0, int arg1) {
-				}
-			});
-
-			pAlert.setButton2("Download", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface arg0, int arg1) {
-					Request req = new DownloadManager.Request(Uri.parse("http://www.darksidebio.com/android/bjh3/download.cgi"));
-					req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-					req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "BJH3.apk");
-					req.setVisibleInDownloadsUi(true);
-
-					DownloadManager svc_download = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-					svc_download.enqueue(req);
-				}
-			});
-
-			pAlert.setMessage(sResponse);
-			pAlert.show();
-		}
-	}
 }
