@@ -29,18 +29,8 @@
         <TabWidget
             android:id="@android:id/tabs"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:tabStripEnabled="true" />
-
-        <ProgressBar
-            android:id="@+id/progressBar1"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="fill_parent"
-            android:layout_height="12sp"
-            android:background="#FF000000"
-            android:max="5"
-            android:progress="0"
-            android:visibility="gone" />
+            android:tabStripEnabled="true"
+            android:layout_height="wrap_content" />
 
         <android.support.v4.view.ViewPager
             android:id="@+id/pager"
