@@ -51,6 +51,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
@@ -58,6 +59,7 @@ import android.widget.Toast;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity {
+	ProgressBar mProgress;
 	BroadcastReceiver mBroadcastReceiver;
 	TabHost mViewHost;
 	ViewPager mViewPager;
@@ -194,6 +196,7 @@ public class MainActivity extends Activity {
 
 		mViewHost = (TabHost) findViewById(R.id.myhost);
 		mViewPager = (ViewPager) findViewById(R.id.pager);
+		mProgress = (ProgressBar) findViewById(R.id.progressBar1);
 
 		svc_inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		svc_alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -211,26 +214,38 @@ public class MainActivity extends Activity {
 			@Override
 			public void onReceive(Context c, Intent i) {
 				Log.d("Z", "mBroadcastReceiver.onReceive(): " + i.getAction());
-				if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
-					// Updating..
-				} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
-					// Updated
-				} else if (i.getAction().contains("DOWNLOAD_COMPLETE")) {
-					// Download Completed
-				} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
-					// Data changed, Update adapters
-					for (View v : mTabList) {
-						try {
-							if (v != null && v.getTag() != null && v.getTag().equals(1)) {
-								ListView lv = (ListView) v.findViewById(R.id.flist);
-								if (lv != null) {
-									attachCursorAdapter((String) v.getTag(), lv);
+				try {
+					if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
+						// Updating..
+						if (mProgress.getVisibility() == ProgressBar.VISIBLE) {
+							mProgress.setProgress(mProgress.getProgress() + 1);
+							mProgress.setVisibility(View.VISIBLE);
+						} else {
+							mProgress.setProgress(1);
+							mProgress.setVisibility(View.VISIBLE);
+						}
+					} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
+						// Updated
+						mProgress.setVisibility(View.GONE);
+					} else if (i.getAction().contains("DOWNLOAD_COMPLETE")) {
+						// Download Completed
+					} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
+						// Data changed, Update adapters
+						for (View v : mTabList) {
+							try {
+								if (v != null && v.getTag() != null && v.getTag().equals(1)) {
+									ListView lv = (ListView) v.findViewById(R.id.flist);
+									if (lv != null) {
+										attachCursorAdapter((String) v.getTag(), lv);
+									}
 								}
+							} catch (Exception e) {
+								e.printStackTrace();
 							}
-						} catch (Exception e) {
-							e.printStackTrace();
 						}
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		};
