@@ -11,8 +11,8 @@ import org.xml.sax.InputSource;
 
 import android.app.AlertDialog;
 import android.app.DownloadManager;
-import android.app.ProgressDialog;
 import android.app.DownloadManager.Request;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;

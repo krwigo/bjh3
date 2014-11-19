@@ -4,19 +4,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.darksidebio.bjh3.MainActivity.Song;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.DownloadManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -44,9 +53,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
@@ -54,6 +65,7 @@ import android.widget.Toast;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity {
+	ProgressBar mProgress;
 	BroadcastReceiver mBroadcastReceiver;
 	TabHost mViewHost;
 	ViewPager mViewPager;
@@ -63,30 +75,32 @@ public class MainActivity extends Activity {
 	Resources mResources;
 	static Database mDatabase;
 	ArrayList<View> mTabList = new ArrayList<View>();
+	ArrayList<Song> mSongListSource = new ArrayList<Song>();
+
+	boolean mSongAdapterFirstRun = true;
+	HashMap<Integer, View> mSongViewMap = new HashMap<Integer, View>();
+	HashMap<String, Integer> mSongGroupColorMap = new HashMap<String, Integer>();
+	ArrayList<Integer> mSongGroupColors = new ArrayList<Integer>(Arrays.asList(0xFFDF0101, 0xFFDF3A01, 0xFFDBA901, 0xFFD7DF01, 0xFFA5DF00, 0xFF3ADF00, 0xFF01DFA5, 0xFF01A9DB, 0xFF013ADF, 0xFFA901DB, 0xFFDF01A5, 0xFF424242));
 
 	class Song {
-		String pName, pColor, pGroup, pCompareString;
 		NodeList pNodes;
+		String pName, pGroup;
+		int pColor;
 
 		public Song(Node inputNode) {
 			NamedNodeMap nnm = inputNode.getAttributes();
 			pNodes = inputNode.getChildNodes();
-
-			try {
-				pGroup = nnm.getNamedItem("group").getNodeValue();
-			} catch (Exception e) {
-				pGroup = "none";
-			}
-
 			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase(Locale.ENGLISH);
-			pCompareString = pGroup + pName;
+			pGroup = nnm.getNamedItem("group").getNodeValue().toLowerCase(Locale.ENGLISH);
 		}
 	}
 
 	static class SongComparator implements Comparator<Song> {
 		public int compare(Song a, Song b) {
 			// return a.pCompareString.compareTo(b.pCompareString);
-			return a.pName.compareTo(b.pName);
+			// return a.pName.compareTo(b.pName);
+			// return a.pColor - b.pColor;
+			return (a.pColor + a.pName).compareTo(b.pColor + b.pName);
 		}
 	}
 
@@ -190,6 +204,7 @@ public class MainActivity extends Activity {
 
 		mViewHost = (TabHost) findViewById(R.id.myhost);
 		mViewPager = (ViewPager) findViewById(R.id.pager);
+		mProgress = (ProgressBar) findViewById(R.id.progressBar1);
 
 		svc_inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		svc_alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -206,24 +221,39 @@ public class MainActivity extends Activity {
 		mBroadcastReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context c, Intent i) {
-				if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
-					// Updating..
-				} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
-					// Updated
-				} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
-					// Data changed, Update adapters
-					for (View v : mTabList) {
-						try {
-							if (v != null && v.getTag() != null && v.getTag().equals(1)) {
-								ListView lv = (ListView) v.findViewById(R.id.flist);
-								if (lv != null) {
-									attachCursorAdapter((String) v.getTag(), lv);
+				Log.d("Z", "mBroadcastReceiver.onReceive(): " + i.getAction());
+				try {
+					if (i.getAction().equalsIgnoreCase("STATUS_UPDATING")) {
+						// Updating..
+						if (mProgress.getVisibility() == ProgressBar.VISIBLE) {
+							mProgress.setProgress(mProgress.getProgress() + 1);
+							mProgress.setVisibility(View.VISIBLE);
+						} else {
+							mProgress.setProgress(1);
+							mProgress.setVisibility(View.VISIBLE);
+						}
+					} else if (i.getAction().equalsIgnoreCase("STATUS_UPDATED")) {
+						// Updated
+						mProgress.setVisibility(View.GONE);
+					} else if (i.getAction().contains("DOWNLOAD_COMPLETE")) {
+						// Download Completed
+					} else if (i.getAction().equalsIgnoreCase("STATUS_DATACHANGE")) {
+						// Data changed, Update adapters
+						for (View v : mTabList) {
+							try {
+								if (v != null && v.getTag() != null && v.getTag().equals(1)) {
+									ListView lv = (ListView) v.findViewById(R.id.flist);
+									if (lv != null) {
+										attachCursorAdapter((String) v.getTag(), lv);
+									}
 								}
+							} catch (Exception e) {
+								e.printStackTrace();
 							}
-						} catch (Exception e) {
-							e.printStackTrace();
 						}
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		};
@@ -232,64 +262,45 @@ public class MainActivity extends Activity {
 		f.addAction("STATUS_UPDATING");
 		f.addAction("STATUS_UPDATED");
 		f.addAction("STATUS_DATACHANGE");
+		// f.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
 		registerReceiver(mBroadcastReceiver, f);
 
 		// Songs
 		ListView viewSongs = (ListView) svc_inflater.inflate(R.layout.fragment_songlist, null);
 		viewSongs.setTag("Songs");
-		viewSongs.setAdapter(new BaseAdapter() {
-			ArrayList<Song> pList = null;
 
-			@Override
-			public int getCount() {
-				if (pList == null) {
-					pList = new ArrayList<Song>();
-
-					try {
-						Log.d("Z", "Opening songs.xml ..");
-						DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-						DocumentBuilder db = dbf.newDocumentBuilder();
-						Document doc = db.parse(getAssets().open("songs.xml"));
-						doc.getDocumentElement().normalize();
-						NodeList n = doc.getElementsByTagName("song");
-						for (int sIndex = 0; sIndex < n.getLength(); sIndex++) {
-							pList.add(new Song(n.item(sIndex)));
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-					Collections.sort(pList, new SongComparator());
+		try {
+			mSongListSource.clear();
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(getAssets().open("songs.xml"));
+			doc.getDocumentElement().normalize();
+			NodeList n = doc.getElementsByTagName("song");
+			for (int sIndex = 0; sIndex < n.getLength(); sIndex++) {
+				Song s = new Song(n.item(sIndex));
+				try {
+					s.pColor = mSongGroupColorMap.get(s.pGroup);
+				} catch (NullPointerException e) {
+					mSongGroupColorMap.put(s.pGroup, s.pColor = mSongGroupColors.remove(0));
 				}
-				return pList.size();
+				mSongListSource.add(s);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			Collections.sort(mSongListSource, new SongComparator());
+		}
 
-			@Override
-			public Song getItem(int i) {
-				return pList.get(i);
-			}
-
-			@Override
-			public long getItemId(int i) {
-				return i;
-			}
-
-			@SuppressLint("NewApi")
-			@Override
+		viewSongs.setAdapter(new ArrayAdapter<Song>(this, 0, 0, mSongListSource) {
 			public View getView(int pos, View v, ViewGroup parent) {
-				// if (v != null)
-				// return v;
+				// Cache
+				v = mSongViewMap.get(pos);
+				if (v != null)
+					return v;
 
-				Song mySong = getItem(pos);
+				// Create New
+				Song s = mSongListSource.get(pos);
 				v = svc_inflater.inflate(R.layout.fragment_songitem, null);
-
-				TextView tvName = (TextView) v.findViewById(R.id.songName);
-				tvName.setText(mySong.pName);
-
-				// Lyrics
-				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
-				lyricLayout.setVisibility(View.GONE);
-
 				v.setOnClickListener(new OnClickListener() {
 					@Override
 					public void onClick(View v) {
@@ -306,9 +317,23 @@ public class MainActivity extends Activity {
 					}
 				});
 
+				// Song Name
+				TextView tvName = (TextView) v.findViewById(R.id.songName);
+				tvName.setText(s.pName);
+
+				// Song Bullet
+				Drawable drawable = mResources.getDrawable(R.drawable.bullet_square10);
+				((GradientDrawable) drawable).setColor(s.pColor);
+				drawable.mutate();
+				tvName.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+
+				// Song Lyrics
+				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
+				lyricLayout.setVisibility(View.GONE);
+
 				Boolean lastWasInfo = true;
-				for (int i = 0; i < mySong.pNodes.getLength(); i++) {
-					Node n = mySong.pNodes.item(i);
+				for (int i = 0; i < s.pNodes.getLength(); i++) {
+					Node n = s.pNodes.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						TextView tvNew = new TextView(MainActivity.this);
 						tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Medium);
@@ -330,9 +355,10 @@ public class MainActivity extends Activity {
 					}
 				}
 
+				// Save Cache
+				mSongViewMap.put(pos, v);
 				return v;
 			}
-
 		});
 
 		// TabHost

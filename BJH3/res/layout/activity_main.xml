@@ -8,18 +8,15 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:orientation="vertical" >
-
-        <TabWidget
-            android:id="@android:id/tabs"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" />
+        android:layout_margin="0dip"
+        android:orientation="vertical"
+        android:padding="0dip" >
 
         <FrameLayout
             android:id="@android:id/tabcontent"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="0"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1000"
             android:visibility="gone" >
 
             <FrameLayout
@@ -29,10 +26,28 @@
                 android:visibility="gone" />
         </FrameLayout>
 
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:tabStripEnabled="true" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="12sp"
+            android:background="#FF000000"
+            android:max="5"
+            android:progress="0"
+            android:visibility="gone" />
+
         <android.support.v4.view.ViewPager
             android:id="@+id/pager"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
+            android:layout_height="fill_parent"
+            android:layout_margin="0dip"
+            android:padding="0dip" />
     </LinearLayout>
 
 </TabHost>
