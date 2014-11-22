@@ -6,6 +6,7 @@
     <string name="app_name_long">Beijing Hash House Harriers</string>
     <string name="action_settings">Settings</string>
     <string name="action_website">Homepage</string>
+    <string name="action_changelog">Changelog</string>
     <string name="action_update_articles">Update Articles</string>
     <string name="action_update_application">Update Application</string>
 

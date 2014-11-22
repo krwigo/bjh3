@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -16,10 +17,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.DownloadManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -48,7 +47,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -69,31 +70,40 @@ public class MainActivity extends Activity {
 	Resources mResources;
 	static Database mDatabase;
 	ArrayList<View> mTabList = new ArrayList<View>();
+	ArrayList<Song> mSongListSource = new ArrayList<Song>();
+
+	boolean mSongAdapterFirstRun = true;
+	// HashMap<Integer, View> mSongViewMap = new HashMap<Integer, View>();
+	HashMap<String, Integer> mSongGroupColorMap = new HashMap<String, Integer>();
+	ArrayList<Integer> mSongGroupColors = new ArrayList<Integer>(Arrays.asList(0xFFDF0101, 0xFFDF3A01, 0xFFDBA901, 0xFFD7DF01, 0xFFA5DF00, 0xFF3ADF00, 0xFF01DFA5, 0xFF01A9DB, 0xFF013ADF, 0xFFA901DB, 0xFFDF01A5, 0xFF424242));
 
 	class Song {
-		String pName, pColor, pGroup, pCompareString;
+		int pColor;
 		NodeList pNodes;
+		String pName, pGroup;
+		boolean isExpanded = false;
 
 		public Song(Node inputNode) {
 			NamedNodeMap nnm = inputNode.getAttributes();
 			pNodes = inputNode.getChildNodes();
-
-			try {
-				pGroup = nnm.getNamedItem("group").getNodeValue();
-			} catch (Exception e) {
-				pGroup = "none";
-			}
-
 			pName = nnm.getNamedItem("name").getNodeValue().toLowerCase(Locale.ENGLISH);
-			pCompareString = pGroup + pName;
+			pGroup = nnm.getNamedItem("group").getNodeValue().toLowerCase(Locale.ENGLISH);
 		}
 	}
 
 	static class SongComparator implements Comparator<Song> {
 		public int compare(Song a, Song b) {
 			// return a.pCompareString.compareTo(b.pCompareString);
-			return a.pName.compareTo(b.pName);
+			// return a.pName.compareTo(b.pName);
+			// return a.pColor - b.pColor;
+			return (a.pColor + a.pName).compareTo(b.pColor + b.pName);
 		}
+	}
+
+	class SongViewHolder {
+		private LinearLayout lyricLayout;
+		private TextView tvName;
+		private Drawable drawable;
 	}
 
 	private void attachCursorAdapter(String title, ListView lv) {
@@ -260,102 +270,94 @@ public class MainActivity extends Activity {
 		// Songs
 		ListView viewSongs = (ListView) svc_inflater.inflate(R.layout.fragment_songlist, null);
 		viewSongs.setTag("Songs");
-		viewSongs.setAdapter(new BaseAdapter() {
-			ArrayList<Song> pList = null;
 
-			@Override
-			public int getCount() {
-				if (pList == null) {
-					pList = new ArrayList<Song>();
-
-					try {
-						Log.d("Z", "Opening songs.xml ..");
-						DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-						DocumentBuilder db = dbf.newDocumentBuilder();
-						Document doc = db.parse(getAssets().open("songs.xml"));
-						doc.getDocumentElement().normalize();
-						NodeList n = doc.getElementsByTagName("song");
-						for (int sIndex = 0; sIndex < n.getLength(); sIndex++) {
-							pList.add(new Song(n.item(sIndex)));
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-					Collections.sort(pList, new SongComparator());
+		try {
+			mSongListSource.clear();
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(getAssets().open("songs.xml"));
+			doc.getDocumentElement().normalize();
+			NodeList n = doc.getElementsByTagName("song");
+			for (int sIndex = 0; sIndex < n.getLength(); sIndex++) {
+				Song s = new Song(n.item(sIndex));
+				try {
+					s.pColor = mSongGroupColorMap.get(s.pGroup);
+				} catch (NullPointerException e) {
+					mSongGroupColorMap.put(s.pGroup, s.pColor = mSongGroupColors.remove(0));
 				}
-				return pList.size();
+				mSongListSource.add(s);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			Collections.sort(mSongListSource, new SongComparator());
+		}
 
+		viewSongs.setOnItemClickListener(new OnItemClickListener() {
 			@Override
-			public Song getItem(int i) {
-				return pList.get(i);
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				Song item = (Song) parent.getItemAtPosition(position);
+				item.isExpanded = !item.isExpanded;
+
+				SongViewHolder holder = (SongViewHolder) view.getTag();
+				holder.lyricLayout.setVisibility(item.isExpanded ? View.VISIBLE : View.GONE);
+
+				if (position + 1 == parent.getCount())
+					parent.setSelection(position);
 			}
-
-			@Override
-			public long getItemId(int i) {
-				return i;
-			}
-
-			@SuppressLint("NewApi")
-			@Override
+		});
+		
+		viewSongs.setAdapter(new ArrayAdapter<Song>(this, 0, 0, mSongListSource) {
 			public View getView(int pos, View v, ViewGroup parent) {
-				// if (v != null)
-				// return v;
+				Song item = getItem(pos);
+				SongViewHolder holder;
 
-				Song mySong = getItem(pos);
-				v = svc_inflater.inflate(R.layout.fragment_songitem, null);
-
-				TextView tvName = (TextView) v.findViewById(R.id.songName);
-				tvName.setText(mySong.pName);
-
-				// Lyrics
-				LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
-				lyricLayout.setVisibility(View.GONE);
-
-				v.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						LinearLayout lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
-						lyricLayout.setVisibility(lyricLayout.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-
-						try {
-							ListView lvParent = (ListView) v.getParent();
-							int vPos = lvParent.getPositionForView(v);
-							if (vPos + 1 == lvParent.getCount())
-								lvParent.setSelection(vPos);
-						} catch (Exception e) {
-						}
-					}
-				});
-
-				Boolean lastWasInfo = true;
-				for (int i = 0; i < mySong.pNodes.getLength(); i++) {
-					Node n = mySong.pNodes.item(i);
-					if (n.getNodeType() == Node.ELEMENT_NODE) {
-						TextView tvNew = new TextView(MainActivity.this);
-						tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Medium);
-						tvNew.setText(n.getTextContent());
-						tvNew.setPadding(20, 20, 0, 0);
-
-						if (n.getNodeName().equals("info")) {
-							tvNew.setTypeface(null, Typeface.ITALIC);
-							tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Small);
-							tvNew.setPadding(10, 20, 0, 0);
-							if (lastWasInfo)
-								tvNew.setPadding(10, 0, 0, 0);
-							lastWasInfo = true;
-						} else {
-							lastWasInfo = false;
-						}
-
-						lyricLayout.addView(tvNew);
-					}
+				if (v == null) {
+					v = LayoutInflater.from(this.getContext()).inflate(R.layout.fragment_songitem, parent, false);
+					holder = new SongViewHolder();
+					holder.lyricLayout = (LinearLayout) v.findViewById(R.id.songLyrics);
+					holder.tvName = (TextView) v.findViewById(R.id.songName);
+					holder.drawable = mResources.getDrawable(R.drawable.bullet_square10);
+					v.setTag(holder);
+				} else {
+					holder = (SongViewHolder) v.getTag();
 				}
 
+				if (item != null) {
+					// Song Name
+					holder.tvName.setText(item.pName);
+					// Song Bullet
+					holder.drawable.mutate();
+					((GradientDrawable) holder.drawable).setColor(item.pColor);
+					holder.tvName.setCompoundDrawablesWithIntrinsicBounds(holder.drawable, null, null, null);
+					// Song Lyrics
+					holder.lyricLayout.setVisibility(item.isExpanded ? View.VISIBLE : View.GONE);
+					holder.lyricLayout.removeAllViews();
+					Boolean lastWasInfo = true;
+					for (int i = 0; i < item.pNodes.getLength(); i++) {
+						Node n = item.pNodes.item(i);
+						if (n.getNodeType() == Node.ELEMENT_NODE) {
+							TextView tvNew = new TextView(MainActivity.this);
+							tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Medium);
+							tvNew.setText(n.getTextContent());
+							tvNew.setPadding(20, 20, 0, 0);
+							if (n.getNodeName().equals("info")) {
+								tvNew.setTypeface(null, Typeface.ITALIC);
+								tvNew.setTextAppearance(MainActivity.this, android.R.style.TextAppearance_Small);
+								tvNew.setPadding(10, 20, 0, 0);
+								if (lastWasInfo)
+									tvNew.setPadding(10, 0, 0, 0);
+								lastWasInfo = true;
+							} else {
+								lastWasInfo = false;
+							}
+							holder.lyricLayout.addView(tvNew);
+						}
+					}
+				}
+				
 				return v;
 			}
-
 		});
 
 		// TabHost
@@ -482,6 +484,12 @@ public class MainActivity extends Activity {
 			Intent web = new Intent(Intent.ACTION_VIEW);
 			web.setData(Uri.parse("http://www.hash.cn"));
 			startActivity(web);
+			return true;
+		case R.id.action_changelog:
+			// Open Changelog
+			Intent changelog = new Intent(Intent.ACTION_VIEW);
+			changelog.setData(Uri.parse("http://wiki.darksidebio.com/index.php/BJH3_(Android)#timeline"));
+			startActivity(changelog);
 			return true;
 		case R.id.action_update:
 			// Reset Times

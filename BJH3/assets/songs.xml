@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-<song group="Unknown" name="There is no beer in heaven">
+<song group="OTHER OCCASIONS" name="There is no beer in heaven">
 <info>(English)</info>
 <info>In heaven there is no beer</info>
 <verse>In heaven there is no beer,
@@ -436,12 +436,12 @@ Sing us another one,
 Just like the other one,
 Sing us another one do.</verse>
 </song>
-<song group="TJH3 Song Book" name="It's a long song">
+<song group="DOWN DOWNS" name="It's a long song">
 <verse>This is a very long song,
 It’s called the down down song.</verse>
 <verse>Drink it down, down, down, down..</verse>
 </song>
-<song group="TJH3 Song Book" name="Jesus can't go hashing">
+<song group="PROCEDURAL SONGS" name="Jesus can't go hashing">
 <verse>Jesus can’t can’t go hashing cuz... he's hung like THIS
 Jesus can’t can’t go hashing cuz... he's hung like THIS.
 Jesus can’t can’t go hashing cuz... he's hung like THIS.
@@ -465,7 +465,7 @@ Jesus can’t go hashing cuz...   Mary Magdalene’s coming over
 Jesus can’t go hashing cuz...   Abraham’s bringing in the sheep 
 Jesus can’t go hashing cuz...   The 12 (Gay) Apostles won’t go</verse>   
 </song> 
-<song group="TJH3 Song Book" name="Weather outside if frightful">
+<song group="OLD AND FORGOTTEN" name="Weather outside if frightful">
 <info>(Melody - Let it Snow)</info>
 <verse>Well, the weather outside is frightful,
 But my dick is so delightful,
@@ -513,58 +513,41 @@ Bù pà tān xiǎn hē gèng duō
 喽喝更多
 Lou hē gèng duō</verse>
 </song>
-<song_rem group="CHINESE" name="Minnanhua Drinking Song (Chinese)">
-<info>(Tune: 山歌好比春江水)</info>
-<verse>
-(闽南话)
-有缘无缘
-Wǔ ēn, mǒu ēn.
-大家来作伴
-Dà gǎi lái zuò huī.
-烧酒喝一杯
-Xiū jiǔ lín jǐ bēi.
-乎干啦（干杯）
-Hǒu dā la (Gānbēi)
-乎干啦（干杯）
-Hǒu dā la (Gānbēi)
-</verse>
-</song_rem>
-<song group="TJH3 Song Book" name="你是傻逼 ni shi shabi (Chinese)">
+<song group="CHINESE" name="你是傻逼 ni shi shabi (Chinese)">
 <verse>你是傻逼你是猪
+ni shi sha bi ni shi zhu
 你是隔夜大尿壶
+ni shi ge ye da niao hu
 不去做爱来跑步
+bu qu zuo ai lai pao bu
 你是傻逼你是猪
-你是大尿壶！</verse>
-<info>(English)</info>
-<verse>Ni shi sha bi ni shi zhu
-Ni shi ge ye da niao hu
-Bu Qu Zuo Ai Lai pao bu
-Ni shi sha bi ni shi zhu 
-Ni sh da niao hu!!</verse>
+ni shi sha bi ni shi zhu 
+你是大尿壶！
+ni sh da niao hu!</verse>
 </song>
-<song group="TJH3 Song Book" name="大便之歌 Da bian zhi ge (Chinese)">
-<info>配曲：好汉歌(Original melody, you can Google it from Google music. The singer’s name is 刘欢)</info>
+<song group="CHINESE" name="大便之歌 da bian zhi ge (Chinese)">
+<info>(歌曲: 好汉歌 歌手:刘欢  专辑:好汉歌)</info>
 <verse>大便谁都有
-Da bian shui dou you 
+da bian shui dou you 
 你有我有全都有
-Ni you wo you quan dou you
+ni you wo you quan dou you
 拉不出来用手抠
-La bu chu lai yong shou kou
+la bu chu lai yong shou kou
 该用手扣用手抠
-Gai yong shou kou yong shou kou
+gai yong shou kou yong shou kou
 风风火火用手抠呀
-Feng feng huo huo yong shou kou ya
+feng feng huo huo yong shou kou ya
 嗨哎呦 一嘿呦 嗨呦一嘿呦
-Hai ai you  yi hei you hai you yi hei you
+hai ai you  yi hei you hai you yi hei you
 拉不出来用手抠啊
-La bu chu lai yong shou kou a 
+la bu chu lai yong shou kou a 
 该用手扣用手抠啊
-Gai yong shou kou a
+gai yong shou kou a
 风风火火用手抠啊 
-Feng feng huo huo yong shou kou a</verse>
-<info>（抠 KOU1 means dig out with fingers）</info>
+feng feng huo huo yong shou kou a</verse>
+<info>(抠 kou1 means dig out with fingers)</info>
 </song>
-<song group="TJH3 Song Book" name="Inceset Time">
+<song group="DOWN DOWNS" name="Inceset Time">
 <info>(Houston TEXAS HHH (TJH3 Song Book))</info>
 <verse>When it's incest time in texas and your sister can't be found, 
 and your mothers in the bathroom, with her panties halfway down.</verse>
@@ -612,7 +595,7 @@ Birth certificates,
 Birth certificates.
 They ain’t got no, birth certificates,
 Bastards through and through.</verse>
-<info>Additional verses:</info>
+<info>Additional:</info>
 <verse>They don't know who the father is, who the father is, who the father is,
 They don't know who the father is, bastards through and through.</verse>
 <verse>Father’s Day is a really sad holiday, really sad holiday, really sad holiday...
@@ -681,7 +664,7 @@ Ou est le papier, ou est le papier;
 Monsieur, monsieur, j’ai fait ‘manure';
 Ou est le papier!</verse>
 </song>
-<song group="TJH3 Song Book" name="You're Stupid">
+<song group="DOWN DOWNS" name="You're Stupid">
 <info>(Tianjin H3 Song Book)</info>
 <verse>You’re stupid
 You’re stupid
