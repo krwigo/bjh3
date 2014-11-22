@@ -485,12 +485,6 @@ public class MainActivity extends Activity {
 			web.setData(Uri.parse("http://www.hash.cn"));
 			startActivity(web);
 			return true;
-		case R.id.action_changelog:
-			// Open Changelog
-			Intent changelog = new Intent(Intent.ACTION_VIEW);
-			changelog.setData(Uri.parse("http://wiki.darksidebio.com/index.php/BJH3_(Android)#timeline"));
-			startActivity(changelog);
-			return true;
 		case R.id.action_update:
 			// Reset Times
 			ContentValues v = new ContentValues();
